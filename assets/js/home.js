@@ -29,6 +29,8 @@
     tabs.forEach(function (t) { var on = t.dataset.tab === id; t.setAttribute('aria-selected', on); t.tabIndex = on ? 0 : -1; if (on && focus) t.focus(); });
     ids.forEach(function (k) { document.getElementById('p-' + k).hidden = (k !== id); });
     if (scroll) { var hh = document.querySelector('.hero').offsetHeight; if (window.scrollY > hh) window.scrollTo({ top: hh }); }
+    // alamat ikut berubah supaya tab bisa dibagikan; replaceState: tidak menambah riwayat tombol Back
+    if (history.replaceState) history.replaceState(null, '', id === ids[0] ? location.pathname + location.search : '#' + id);
   }
   tabs.forEach(function (t, i) {
     t.addEventListener('click', function () { open(t.dataset.tab, false, true); });
@@ -40,8 +42,9 @@
       if (n !== null) { e.preventDefault(); open(ids[n], true, false); }
     });
   });
-  // Buka tab dari alamat, misalnya index.html#guide
-  var h = location.hash.slice(1); if (ids.indexOf(h) > -1) open(h, false, false);
+  // Buka tab dari alamat, misalnya chaatown.my.id/#guide (saat dibuka & saat alamat diganti)
+  function fromHash() { var h = location.hash.slice(1); if (ids.indexOf(h) > -1) open(h, false, false); }
+  fromHash(); window.addEventListener('hashchange', fromHash);
 })();
 
 /* ---------- Sub-tab (Top Up & Guide) ---------- */

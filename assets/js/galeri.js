@@ -36,13 +36,13 @@
   var TONES=['#b9cdf0','#f9c8d5','#d4c8f3','#fbe3a0'];
   var grid=document.getElementById('grid'),empty=document.getElementById('empty');
   var lb=document.getElementById('lb'),lbm=document.getElementById('lbm'),lbc=document.getElementById('lbc');
-  var cur=0,last=null;
+  var cur=0,last=null,page=document.querySelector('.page');
   if(!PHOTOS.length)empty.hidden=false;
   function label(p){return (p.caption||'Foto pemain')+(p.player?' - oleh '+p.player:'')}
   function media(p,i,big){
     var m=document.createElement('div');
     if(p.file){
-      var im=new Image();im.alt=p.caption||'';if(!big)im.loading='lazy';im.src=ROOT+p.file;
+      var im=new Image();im.alt=label(p);if(!big)im.loading='lazy';im.src=ROOT+p.file;
       im.onerror=function(){m.className='ph';m.style.background=TONES[i%4];m.style.fontSize='15px';m.textContent='Foto belum ditemukan';im.remove()};
       m.appendChild(im);
     }else{m.className='ph';m.style.background=TONES[i%4];m.textContent=p.emoji||'\ud83d\uddbc\ufe0f'}
@@ -63,8 +63,8 @@
     cur=(i+PHOTOS.length)%PHOTOS.length;var p=PHOTOS[cur];
     lbm.innerHTML='';lbm.appendChild(media(p,cur,true));lbc.textContent=label(p);
   }
-  function openLb(i){last=document.activeElement;show(i);lb.hidden=false;document.body.style.overflow='hidden';document.getElementById('lbx').focus()}
-  function closeLb(){lb.hidden=true;document.body.style.overflow='';if(last)last.focus()}
+  function openLb(i){last=document.activeElement;show(i);lb.hidden=false;if(page)page.inert=true;document.body.style.overflow='hidden';document.getElementById('lbx').focus()}
+  function closeLb(){lb.hidden=true;if(page)page.inert=false;document.body.style.overflow='';if(last)last.focus()}
   document.getElementById('lbx').addEventListener('click',closeLb);
   document.getElementById('lbp').addEventListener('click',function(){show(cur-1)});
   document.getElementById('lbnx').addEventListener('click',function(){show(cur+1)});
@@ -74,5 +74,9 @@
     if(e.key==='Escape')closeLb();
     else if(e.key==='ArrowLeft')show(cur-1);
     else if(e.key==='ArrowRight')show(cur+1);
+    else if(e.key==='Tab'){ // kunci fokus di dalam lightbox
+      var f=[document.getElementById('lbx'),document.getElementById('lbp'),document.getElementById('lbnx')],k=f.indexOf(document.activeElement);
+      e.preventDefault();f[(k+(e.shiftKey?-1:1)+f.length)%f.length].focus();
+    }
   });
 })();

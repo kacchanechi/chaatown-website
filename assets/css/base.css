@@ -7,7 +7,7 @@
 
 /* ---------- Warna tema ---------- */
 :root{
-  --bg:#f2f6fd; --bg2:#e4ecf9; --ink:#3a4a78; --muted:#6b789f; --grass:#aac1e9; --dirt:#dbe3f6;
+  --bg:#f2f6fd; --bg2:#e4ecf9; --ink:#3a4a78; --muted:#5c688d; --grass:#aac1e9; --dirt:#dbe3f6;
   --lamp:#f9c8d5; --card:#ffffff; --line:#7f99cc; --shade:#c9d7f2; --sky-glow:#e5ecfa; --bld:#94b0de; --win:#ffffff;
   --lav:#d4c8f3; --s1:#94b0de; --s2:#f2a3bb; --s3:#f5d47a;
   box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
