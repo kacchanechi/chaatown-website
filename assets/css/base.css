@@ -47,7 +47,8 @@ nav a.d[aria-current="page"]{background:var(--lamp);color:#26305a}
 }
 :root[data-theme="dark"] .tema .ic-gelap{display:none}
 :root[data-theme="dark"] .tema .ic-terang{display:block}
-
+/* Efek lingkaran saat ganti tema: matikan fade bawaan, animasinya diatur theme.js */
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
 /* ---------- Footer ---------- */
 footer{text-align:center;color:var(--muted);font-size:14px;border-top:2px solid var(--line)}
 .love{font-size:16px;margin:0 0 6px;color:var(--ink)}

@@ -37,12 +37,29 @@
   apply(load());
   sync();
 
+  // Efek ganti tema: tema baru "tumpah" dari tombol berupa lingkaran yang membesar (View Transitions).
+  // Browser lama, atau pengunjung yang memilih "kurangi animasi": langsung berganti tanpa efek.
+  var pending = null; // tujuan klik terakhir, supaya klik cepat beruntun tetap bergantian benar
+  function toggle(b) {
+    var t = (pending || current()) === 'dark' ? 'light' : 'dark';
+    function go() { apply(t); save(t); sync(); if (pending === t) pending = null; }
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!document.startViewTransition || reduce) { go(); return; }
+    pending = t;
+    var r = b.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+    var end = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y)); // sampai sudut terjauh
+    var vt = document.startViewTransition(go);
+    vt.ready.then(function () {
+      root.animate(
+        { clipPath: ['circle(0px at ' + x + 'px ' + y + 'px)', 'circle(' + end + 'px at ' + x + 'px ' + y + 'px)'] },
+        { duration: 500, easing: 'ease-in-out', pseudoElement: '::view-transition-new(root)' }
+      );
+    }).catch(function () {});
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     var b = document.getElementById('tema');
-    if (b) b.addEventListener('click', function () {
-      var t = current() === 'dark' ? 'light' : 'dark';
-      apply(t); save(t); sync();
-    });
+    if (b) b.addEventListener('click', function () { toggle(b); });
     sync();
   });
 
