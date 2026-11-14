@@ -112,8 +112,8 @@ Kacchan memberi beberapa syarat:
 - Yang tampil hanya channel yang **bisa dilihat member biasa**. Channel bergembok khusus admin tidak ikut.
 - Nama channel ditulis rapi sesuai tema website: pakai spasi, bukan tanda strip (`-`), tanpa emoji dan hiasan.
 - Kategori **Forums dibiarkan apa adanya** sampai owner memutuskan.
-- Nama channel **bisa diklik** 👉👈.
-- Pakainya **bot** ("pusing dikit nggak apa-apa, pengen gawe!").
+- Nama channel **bisa diklik**.
+- Pakainya **bot**.
 
 Yang kemudian terjadi:
 - **Kacchan membuat bot sendiri** di Discord Developer Portal, mengundangnya ke server **tanpa izin apa pun**, dan menyimpan "kunci" bot (token) di komputer, di luar folder proyek. Kacchan sempat gagal menyimpan token karena Ctrl+V tidak jalan di terminal, lalu berhasil lewat Notepad.
