@@ -223,3 +223,8 @@ footer{padding:26px 0}
 .race small{display:block;font-weight:700;font-size:13px;color:var(--muted);margin-top:4px}
 .race ul{margin:2px 0 4px;padding-left:18px;font-size:15px}
 .race .rsz{margin:2px 0 4px!important;font-size:14px;color:var(--muted)}
+
+/* Cadangan untuk browser lama tanpa color-mix() (lihat glass.css) */
+@supports not (color:color-mix(in srgb,red 50%,blue)){
+  .ab,.race{background:var(--bg2)}
+}

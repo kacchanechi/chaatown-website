@@ -120,3 +120,25 @@ ol li{position:relative;z-index:1}
 .bb.b2{width:9%;aspect-ratio:1;left:4%;bottom:16%;background:radial-gradient(circle at 32% 28%,#fff 0 10%,#ece6fb 30%,#d4c8f3 65%,#a99bd8)}
 .bb.b3{width:6%;aspect-ratio:1;right:14%;bottom:6%;background:radial-gradient(circle at 32% 28%,#fff 0 10%,var(--blue-a) 30%,var(--blue-b) 65%,var(--blue-c))}
 @media(max-width:720px){.orb{order:-1;max-width:230px}}
+
+/* ---------- HP: matikan blur di panel kaca agar scroll tetap ringan ----------
+   Panel sudah 62-92% buram, jadi blur hampir tak terlihat tapi berat untuk GPU.
+   Blur pada .tabbar (menempel di atas saat scroll) sengaja dipertahankan. */
+@media(max-width:720px){
+  .f:nth-child(n),.cc:nth-child(n),.cg:nth-child(n),.safe,.oform,.menu,.gd,.soon,.rank,.pk,.p,.rules li,ol li,.bubble,.pill{
+    -webkit-backdrop-filter:none;backdrop-filter:none}
+}
+
+/* ---------- Cadangan untuk browser lama tanpa color-mix() ----------
+   Tanpa blok ini, properti yang memakai color-mix() + var() menjadi kosong
+   (tab bar transparan, gelembung maskot hilang, tombol tanpa garis tepi). */
+@supports not (color:color-mix(in srgb,red 50%,blue)){
+  body::before{display:none}
+  .alt{background:var(--bg2)}
+  .tabbar{background:var(--bg)}
+  .btn,.ip button,.cb,nav a.d[aria-current="page"],.tab[aria-selected="true"],.pill.hl{border-color:var(--pink-c)}
+  .logo,.av{box-shadow:0 0 0 4px var(--glass-hi),var(--soft)}
+  .ava{box-shadow:0 0 0 6px var(--glass-hi),var(--soft)}
+  .oform select,.oform input{background:var(--bg)}
+  .orb::before,.mw::after{background:radial-gradient(circle at 32% 26%,rgba(255,255,255,.95) 0 5%,rgba(255,255,255,.4) 16%,rgba(170,193,233,.35) 48%,rgba(127,153,204,.45) 100%)}
+}
