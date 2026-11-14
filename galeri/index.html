@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Galeri - ChaaTownSMP</title>
+<meta name="description" content="Galeri foto dari para pemain ChaaTownSMP.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/galeri.css">
+</head>
+<body>
+<div class="page">
+  <div class="wrap">
+    <nav><b><img class="logo" src="../assets/img/logo.webp" alt="">Galeri ChaaTown</b>
+      <div class="navb"><a class="d" href="../">Server Minecraft</a><a class="d" href="../discord/">Server Discord</a><a class="d" href="#" aria-current="page">Galeri</a><a class="d" href="../about/">About Achaa</a></div></nav>
+  </div>
+  <main>
+    <div class="wrap">
+      <h1>Galeri ChaaTown</h1>
+      <p class="lead">Momen-momen seru dari para pemain. Klik foto untuk memperbesar.</p>
+      <div class="grid" id="grid"></div>
+      <div class="empty" id="empty" hidden><b>Galeri masih kosong</b>Foto dari para pemain akan muncul di sini.</div>
+      <div class="send">
+        <h2>Mau fotomu tampil di sini?</h2>
+        <p>Kirim screenshot terbaikmu ke forum Galeri di Discord Chatizen Guild Bar. Foto yang dipilih akan dipajang lengkap dengan namamu.</p>
+        <a class="btn" href="https://discord.gg/txe8h2DSJf" target="_blank" rel="noopener">Buka Discord</a>
+      </div>
+    </div>
+  </main>
+  <footer>Dibuat dengan 💙 oleh Achaa</footer>
+</div>
+
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Foto diperbesar" hidden>
+  <button class="lbx" id="lbx" type="button" aria-label="Tutup">&times;</button>
+  <button class="lbn lbp" id="lbp" type="button" aria-label="Foto sebelumnya">&#8249;</button>
+  <figure><div id="lbm"></div><figcaption id="lbc"></figcaption></figure>
+  <button class="lbn lbnx" id="lbnx" type="button" aria-label="Foto berikutnya">&#8250;</button>
+</div>
+
+<script src="../assets/js/galeri.js"></script>
+</body>
+</html>

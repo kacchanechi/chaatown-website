@@ -1,5 +1,5 @@
 /* =====================================================================
-   ChaaTown - discord.js (khusus discord.html)
+   ChaaTown - discord.js (khusus discord/index.html)
    ===================================================================== */
 (function () {
   // Deretan gelas pixel di atas meja bar: grid 64x8

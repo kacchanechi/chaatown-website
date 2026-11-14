@@ -1,5 +1,5 @@
 /* =====================================================================
-   ChaaTown - about.js (khusus about.html)
+   ChaaTown - about.js (khusus about/index.html)
    Butuh: common.js dimuat lebih dulu.
    ===================================================================== */
 

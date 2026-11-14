@@ -1,10 +1,11 @@
 /* =====================================================================
-   ChaaTown - galeri.js (khusus galeri.html)
+   ChaaTown - galeri.js (khusus galeri/index.html)
    Daftar foto ada di bagian "TAMBAH FOTO DI SINI" di bawah.
    ===================================================================== */
 (function(){
   // ====== TAMBAH FOTO DI SINI ======
-  // Satu baris per foto. Taruh file fotonya di folder "galeri/" proyek ini.
+  // Satu baris per foto. Taruh file fotonya di folder "galeri/" proyek ini,
+  // lalu tulis path-nya dari akar situs (diawali galeri/), seperti contoh di bawah.
   // Contoh (hapus tanda // di depannya untuk memakainya):
   // {file:'galeri/foto-1.webp', player:'NickPemain', caption:'Keterangan singkat'},
   var PHOTOS=[
@@ -22,6 +23,7 @@
     {file:'galeri/patung-batu.webp', player:'Veneznia', caption:'Urraa!'},
   ];
   var DEMO=false;
+  var ROOT='../'; // halaman ini ada di /galeri/, jadi path foto dihitung dari satu folder di atasnya
   // =================================
   if(DEMO){PHOTOS=[
     {emoji:'\ud83c\udff0',player:'NickPemain1',caption:'Kastil di tepi danau'},
@@ -40,7 +42,7 @@
   function media(p,i,big){
     var m=document.createElement('div');
     if(p.file){
-      var im=new Image();im.alt=p.caption||'';if(!big)im.loading='lazy';im.src=p.file;
+      var im=new Image();im.alt=p.caption||'';if(!big)im.loading='lazy';im.src=ROOT+p.file;
       im.onerror=function(){m.className='ph';m.style.background=TONES[i%4];m.style.fontSize='15px';m.textContent='Foto belum ditemukan';im.remove()};
       m.appendChild(im);
     }else{m.className='ph';m.style.background=TONES[i%4];m.textContent=p.emoji||'\ud83d\uddbc\ufe0f'}
