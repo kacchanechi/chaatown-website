@@ -35,6 +35,19 @@ nav a.d:hover{background:var(--ink);color:var(--bg)}
 nav a.d[aria-current="page"]{background:var(--lamp);color:#26305a}
 @media(max-width:560px){nav{flex-direction:column;align-items:flex-start}nav a.d{padding:6px 12px;font-size:15px}}
 
+/* ---------- Tombol tema terang/gelap (logika di theme.js) ----------
+   Ikon menunjukkan tujuan: bulan = ganti ke gelap, matahari = ganti ke terang. */
+.tema{font:inherit;color:inherit;background:transparent;border:2px solid var(--line);padding:0 10px;min-width:40px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.tema:hover{background:var(--ink);color:var(--bg)}
+.tema svg{width:18px;height:18px;display:block;shape-rendering:crispEdges}
+.tema .ic-terang{display:none}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .tema .ic-gelap{display:none}
+  :root:not([data-theme="light"]) .tema .ic-terang{display:block}
+}
+:root[data-theme="dark"] .tema .ic-gelap{display:none}
+:root[data-theme="dark"] .tema .ic-terang{display:block}
+
 /* ---------- Footer ---------- */
 footer{text-align:center;color:var(--muted);font-size:14px;border-top:2px solid var(--line)}
 .love{font-size:16px;margin:0 0 6px;color:var(--ink)}
