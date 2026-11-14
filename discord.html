@@ -19,7 +19,7 @@
       <div>
         <h1>Mampir dulu, duduk santai.</h1>
         <p class="sub">Chatizen Guild Bar adalah server Discord buat nongkrong. Ngobrol random, mabar game apa saja, dan tidak harus soal Minecraft.</p>
-        <a class="btn" href="https://discord.gg/txe8h2DSJf" target="_blank" rel="noopener" data-discord>Masuk ke bar</a><a class="btn o" href="index.html">Lihat server Minecraft</a>
+        <a class="btn" href="https://discord.gg/txe8h2DSJf" target="_blank" rel="noopener">Masuk ke bar</a><a class="btn o" href="index.html">Lihat server Minecraft</a>
       </div>
       <div class="mw"><div class="bubble">Halo, warga baru! Mau minum apa?</div><img class="mascot" src="assets/img/maskot.webp" alt="Maskot Chatizen: kucing di dalam blueberry"></div>
     </div>
@@ -81,7 +81,7 @@
   <div class="wrap">
     <h2>Kursi kosong masih banyak</h2>
     <p class="lead">Masuk ke Discord, sapa penghuni bar, dan mulai ngobrol.</p>
-    <a class="btn" href="https://discord.gg/txe8h2DSJf" target="_blank" rel="noopener" data-discord>Gabung Chatizen Guild Bar</a>
+    <a class="btn" href="https://discord.gg/txe8h2DSJf" target="_blank" rel="noopener">Gabung Chatizen Guild Bar</a>
   </div>
 </section>
 
@@ -89,29 +89,7 @@
   <p class="love">Dibuat dengan 💙 oleh Achaa</p>
   Chatizen Guild Bar. Bukan produk resmi Discord ataupun Minecraft.
 </footer>
-<div id="toast" role="status">Link Discord belum diisi</div>
 
-<script>
-(function(){
-  // Deretan gelas pixel di atas meja bar: 64x8 grid
-  var svg=document.getElementById('bar'),h='',cols=['#aac1e9','#f9c8d5','#d4c8f3','#b8e2d4'];
-  for(var x=2,i=0;x<60;x+=9,i++){
-    var c=cols[i%4];
-    h+='<rect x="'+x+'" y="2" width="4" height="5" fill="'+c+'"/>'+
-       '<rect x="'+(x+4)+'" y="3" width="1" height="3" fill="'+c+'"/>'+
-       '<rect x="'+x+'" y="1" width="4" height="1" fill="#fff"/>';
-  }
-  svg.innerHTML=h;
-  var m=document.querySelector('.logo'),a=document.getElementById('chaaAv');
-  if(m&&a){a.innerHTML='<img alt="Achaa" src="'+m.src+'">'}
-  var t=document.getElementById('toast');
-  function show(m){t.textContent=m;t.classList.add('on');setTimeout(function(){t.classList.remove('on')},1800)}
-  [].forEach.call(document.querySelectorAll('[data-discord]'),function(a){
-    a.addEventListener('click',function(e){
-      if(this.getAttribute('href')==='#'){e.preventDefault();show('Link Discord belum diisi')}
-    });
-  });
-})();
-</script>
+<script src="assets/js/discord.js"></script>
 </body>
 </html>
