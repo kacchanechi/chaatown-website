@@ -1,0 +1,47 @@
+/* =====================================================================
+   ChaaTown - about.css (khusus about.html: About Achaa)
+   Dimuat setelah base.css dan sebelum glass.css.
+   ===================================================================== */
+
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:linear-gradient(var(--bg) 0%,var(--sky-glow) 100%) fixed;font:400 17px/1.6 "DM Sans",system-ui,sans-serif}
+.page{min-height:100vh;display:flex;flex-direction:column;position:relative;z-index:1}
+.wrap{width:100%}
+
+/* ---------- Profil ---------- */
+main{flex:1;width:100%;max-width:500px;margin:0 auto;padding:18px 22px 40px;text-align:center}
+.ava{width:124px;height:124px;border-radius:50%;object-fit:cover;background:var(--card);border:3px solid var(--line);box-shadow:5px 5px 0 var(--shade);padding:0;animation:bob 4s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-6px)}}
+h1{font-size:34px;margin-top:20px}
+.tag{margin:6px 0 0;color:var(--muted);font-size:19px}
+.bio{margin:16px auto 0;max-width:38ch;color:var(--muted);font-size:16px}
+
+/* ---------- Ikon sosial media ---------- */
+.soc{display:flex;justify-content:center;gap:14px;margin:24px 0 30px}
+.soc a{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--card);border:2px solid var(--line);box-shadow:3px 3px 0 var(--shade);color:var(--ink)}
+.soc a:hover{background:var(--lamp);color:#26305a}
+.soc svg{width:24px;height:24px}
+
+/* ---------- Tombol link (pill) ---------- */
+.pill{display:block;text-decoration:none;background:var(--card);border:2px solid var(--line);border-radius:999px;padding:16px 26px;margin-bottom:16px;box-shadow:5px 5px 0 var(--shade);transition:transform .15s}
+.pill:hover{transform:translate(2px,2px);box-shadow:3px 3px 0 var(--shade)}
+.pill b{display:block;font-size:18px}
+.pill small{display:block;color:var(--muted);font-size:14px;margin-top:2px}
+.pill.hl{background:var(--lamp);color:#26305a}
+.pill.hl small{color:#4a5378}
+
+/* ---------- Skyline & footer ---------- */
+#sky{display:block;width:100%;height:auto;image-rendering:pixelated}
+.strip{height:22px;background:var(--grass);border-bottom:22px solid var(--dirt)}
+footer{padding:22px 0;background:var(--bg)}
+
+/* ---------- Bintang berkelip di latar ---------- */
+#stars{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+#stars i{position:absolute;display:block;animation:tw 3s ease-in-out infinite}
+#stars i.d{background:var(--s1)}
+#stars i.d.b{background:var(--s2)}
+#stars i.d.c{background:var(--s3)}
+#stars i.sp{width:9px;height:9px;color:var(--s1);background:linear-gradient(currentColor,currentColor) center/2px 100% no-repeat,linear-gradient(currentColor,currentColor) center/100% 2px no-repeat}
+#stars i.sp.b{color:var(--s2)}
+#stars i.sp.c{color:var(--s3)}
+@keyframes tw{0%,100%{opacity:.25}50%{opacity:1}}

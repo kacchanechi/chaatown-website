@@ -1,0 +1,122 @@
+/* =====================================================================
+   ChaaTown - glass.css
+   Lapisan tema "kaca blueberry" (glass & bubble) untuk index, discord, about.
+   WAJIB dimuat PALING AKHIR (setelah <halaman>.css), karena file ini
+   menimpa gaya dasar: panel jadi kaca, tombol glossy, nav berbentuk pill.
+   ===================================================================== */
+
+:root{
+  --glass:rgba(255,255,255,.62); --glass-hi:rgba(255,255,255,.92); --rim:rgba(127,153,204,.5);
+  --soft:0 18px 40px -22px rgba(58,74,120,.45); --wob:24px 30px 22px 32px / 30px 22px 32px 24px;
+  --gloss:inset 0 1px 0 rgba(255,255,255,.85);
+  --pink-a:#ffe1e9; --pink-b:#f9c8d5; --pink-c:#f0a7bc; --blue-a:#dfe9fb; --blue-b:#aac1e9; --blue-c:#7f99cc;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--glass:rgba(47,56,104,.6);--glass-hi:rgba(90,104,170,.5);--rim:rgba(169,188,232,.38);--soft:0 18px 40px -20px rgba(0,0,0,.65);--gloss:inset 0 1px 0 rgba(255,255,255,.18)}
+}
+:root[data-theme="dark"]{--glass:rgba(47,56,104,.6);--glass-hi:rgba(90,104,170,.5);--rim:rgba(169,188,232,.38);--soft:0 18px 40px -20px rgba(0,0,0,.65);--gloss:inset 0 1px 0 rgba(255,255,255,.18)}
+
+/* ---------- Latar bokeh ---------- */
+body::before{content:"";position:fixed;inset:-10%;z-index:-1;pointer-events:none;filter:blur(30px);
+  background:
+   radial-gradient(circle at 10% 16%,color-mix(in srgb,var(--grass) 70%,transparent),transparent 24%),
+   radial-gradient(circle at 90% 10%,color-mix(in srgb,var(--lamp) 70%,transparent),transparent 22%),
+   radial-gradient(circle at 82% 70%,color-mix(in srgb,#d4c8f3 60%,transparent),transparent 26%),
+   radial-gradient(circle at 18% 88%,color-mix(in srgb,var(--grass) 55%,transparent),transparent 24%),
+   radial-gradient(circle at 50% 46%,color-mix(in srgb,var(--lamp) 35%,transparent),transparent 30%)}
+.hero{background:transparent}
+.alt{background:color-mix(in srgb,var(--bg2) 50%,transparent)}
+footer{background:transparent;border-top:1.5px solid var(--rim)}
+
+/* ---------- Panel kaca ---------- */
+.f:nth-child(n),.cc:nth-child(n),.cg:nth-child(n),.safe,.oform,.menu,.gd,.soon,.rank,.pk,.p,.rules li,ol li,.bubble{
+  background:linear-gradient(165deg,var(--glass-hi),var(--glass));
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  border:1.5px solid var(--rim);border-radius:var(--wob);box-shadow:var(--soft),var(--gloss)}
+.f:nth-child(odd){box-shadow:var(--soft),var(--gloss),inset 0 -26px 40px -34px var(--grass)}
+.f:nth-child(even){box-shadow:var(--soft),var(--gloss),inset 0 -26px 40px -34px var(--lamp)}
+.soon{border-style:dashed}
+.rank,.pk{overflow:hidden}
+.rk-h,.pk-h{background-image:linear-gradient(180deg,rgba(255,255,255,.6),rgba(255,255,255,0) 75%)!important;border-bottom:1.5px solid var(--rim)}
+.p{border-radius:28px}
+
+/* ---------- Judul section: pita kaca bergelombang ---------- */
+h2{display:inline-block;padding:.42em .8em .36em;font-size:clamp(22px,4vw,34px);
+  background:linear-gradient(170deg,var(--glass-hi),var(--glass));border:1.5px solid var(--rim);
+  border-radius:var(--wob);box-shadow:var(--soft),var(--gloss);margin-bottom:18px}
+
+/* ---------- Tombol glossy ---------- */
+.btn,.ip button,.cb{border-radius:999px;border:1.5px solid color-mix(in srgb,var(--pink-c) 80%,#fff);color:#26305a;
+  background:linear-gradient(180deg,var(--pink-a) 0%,var(--pink-b) 48%,var(--pink-c) 100%);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.85),inset 0 -4px 8px rgba(200,90,125,.22),0 12px 22px -12px rgba(230,120,155,.9);transition:transform .15s}
+.btn:hover,.ip button:hover,.cb:hover{transform:translateY(-2px);box-shadow:inset 0 2px 0 rgba(255,255,255,.85),inset 0 -4px 8px rgba(200,90,125,.22),0 16px 26px -12px rgba(230,120,155,.95)}
+.btn:active,.ip button:active,.cb:active{transform:translateY(1px)}
+.btn.o{background:linear-gradient(180deg,var(--glass-hi),var(--glass));border-color:var(--rim);color:var(--ink);box-shadow:var(--soft),var(--gloss)}
+.ip code{border-radius:999px;background:linear-gradient(170deg,var(--glass-hi),var(--glass));border:1.5px solid var(--rim);box-shadow:var(--soft),var(--gloss);padding:12px 22px}
+
+/* ---------- Navigasi pill ---------- */
+nav a.d{border-radius:999px;border:1.5px solid var(--rim);background:linear-gradient(170deg,var(--glass-hi),var(--glass));box-shadow:var(--gloss)}
+nav a.d:hover{background:linear-gradient(170deg,var(--glass-hi),var(--glass));border-color:var(--line);color:var(--ink);transform:translateY(-1px)}
+nav a.d[aria-current="page"]{background:linear-gradient(180deg,var(--pink-a),var(--pink-b) 50%,var(--pink-c));border-color:color-mix(in srgb,var(--pink-c) 80%,#fff);color:#26305a;box-shadow:inset 0 2px 0 rgba(255,255,255,.85),0 8px 16px -10px rgba(230,120,155,.9)}
+.logo{border:1.5px solid var(--rim);box-shadow:0 0 0 4px color-mix(in srgb,var(--glass-hi) 80%,transparent),var(--soft)}
+
+/* ---------- Tab & sub-tab ---------- */
+.tabbar{background:color-mix(in srgb,var(--bg) 62%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border-bottom:1.5px solid var(--rim)}
+.tab{border-radius:999px;border:1.5px solid var(--rim);background:linear-gradient(170deg,var(--glass-hi),var(--glass))}
+.tab:hover{background:var(--glass-hi)}
+.tab[aria-selected="true"]{background:linear-gradient(180deg,var(--pink-a),var(--pink-b) 50%,var(--pink-c));border-color:color-mix(in srgb,var(--pink-c) 80%,#fff);box-shadow:inset 0 2px 0 rgba(255,255,255,.85),0 8px 16px -10px rgba(230,120,155,.9)}
+.subtabs{border-radius:999px;overflow:hidden;border:1.5px solid var(--rim);background:linear-gradient(170deg,var(--glass-hi),var(--glass));box-shadow:var(--gloss)}
+.stab+.stab{border-left:1.5px solid var(--rim)}
+.subtabs .stab[aria-selected="true"]{background:linear-gradient(180deg,var(--blue-a),var(--blue-b) 55%,var(--blue-c));color:#26305a}
+.subtabs.pills{border:0;background:transparent;box-shadow:none;overflow:visible;border-radius:0}
+.pills .stab,.pills .stab+.stab{border:1.5px solid var(--rim);border-radius:999px;background:linear-gradient(170deg,var(--glass-hi),var(--glass))}
+.pills .stab[aria-selected="true"]{background:linear-gradient(180deg,var(--blue-a),var(--blue-b) 55%,var(--blue-c));color:#26305a;box-shadow:inset 0 2px 0 rgba(255,255,255,.8)}
+
+/* ---------- Bola kaca (orb): nomor langkah & ikon sosial ---------- */
+ol li::before,.rules li::before,.stp b,.soc a{border-radius:50%;border:1.5px solid rgba(255,255,255,.75);color:#26305a;
+  background:radial-gradient(circle at 32% 28%,#fff 0 9%,var(--blue-a) 26%,var(--blue-b) 60%,var(--blue-c) 100%);
+  box-shadow:inset -3px -5px 10px rgba(58,74,120,.22),inset 3px 4px 8px rgba(255,255,255,.7),0 8px 16px -8px rgba(58,74,120,.55)}
+.rules li:nth-child(even)::before,.stp:nth-of-type(even) b{background:radial-gradient(circle at 32% 28%,#fff 0 9%,var(--pink-a) 26%,var(--pink-b) 60%,var(--pink-c) 100%)}
+.soc a:hover{background:radial-gradient(circle at 32% 28%,#fff 0 9%,var(--pink-a) 26%,var(--pink-b) 60%,var(--pink-c) 100%);color:#26305a}
+
+/* ---------- Garis penghubung antar langkah ---------- */
+ol{position:relative}
+ol::before{content:"";position:absolute;left:40px;top:28px;bottom:28px;width:2px;border-radius:2px;
+  background:linear-gradient(var(--blue-b),var(--pink-b));z-index:0}
+ol li{position:relative;z-index:1}
+
+/* ---------- Detail kecil ---------- */
+.row code,.cmd code,.gd code,.rk-b code,.safe code,.res pre{border-radius:10px}
+.cmd code{border-radius:8px}
+.oform select,.oform input{border-radius:14px;border:1.5px solid var(--rim);background:color-mix(in srgb,var(--bg) 80%,transparent);box-shadow:inset 0 2px 4px rgba(58,74,120,.08)}
+.nt{border-radius:0 12px 12px 0}
+.err{border-radius:0 8px 8px 0}
+.inst{border-radius:999px}
+.cimg{border-radius:22px;border:1.5px solid var(--rim);box-shadow:var(--soft)}
+.av{border:1.5px solid var(--rim);box-shadow:0 0 0 4px color-mix(in srgb,var(--glass-hi) 80%,transparent),var(--soft)}
+#toast{border-radius:999px;box-shadow:var(--soft)}
+.ava{border:1.5px solid var(--rim);box-shadow:0 0 0 6px color-mix(in srgb,var(--glass-hi) 85%,transparent),var(--soft)}
+.pill{border:1.5px solid var(--rim);background:linear-gradient(170deg,var(--glass-hi),var(--glass));-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:var(--soft),var(--gloss)}
+.pill:hover{transform:translateY(-2px);box-shadow:var(--soft),var(--gloss)}
+.pill.hl{background:linear-gradient(180deg,var(--pink-a),var(--pink-b) 55%,var(--pink-c));border-color:color-mix(in srgb,var(--pink-c) 80%,#fff);box-shadow:inset 0 2px 0 rgba(255,255,255,.85),0 14px 24px -14px rgba(230,120,155,.95)}
+.bubble{border-radius:20px;background:var(--card)}
+.bubble::after{border-color:var(--rim)}
+
+/* ---------- Maskot di dalam gelembung blueberry ---------- */
+.orb,.mw{position:relative}
+.orb{justify-self:center;width:100%;max-width:360px;aspect-ratio:1;display:grid;place-items:center}
+.orb::before,.mw::after{content:"";position:absolute;border-radius:50%;z-index:0;
+  background:radial-gradient(circle at 32% 26%,rgba(255,255,255,.95) 0 5%,rgba(255,255,255,.4) 16%,color-mix(in srgb,var(--grass) 35%,transparent) 48%,color-mix(in srgb,var(--line) 45%,transparent) 100%);
+  border:1.5px solid rgba(255,255,255,.7);
+  box-shadow:inset -14px -20px 36px rgba(90,118,184,.25),inset 10px 12px 26px rgba(255,255,255,.55),0 34px 60px -30px rgba(58,74,120,.55)}
+.orb::before{inset:0}
+.mw::after{left:-10%;right:-10%;bottom:-14%;aspect-ratio:1}
+.orb .mascot{position:relative;z-index:1;width:78%;max-width:none}
+.mw .mascot{position:relative;z-index:1}
+.mw .bubble{z-index:2}
+.bb{position:absolute;border-radius:50%;z-index:2;border:1.5px solid rgba(255,255,255,.75);
+  box-shadow:inset -3px -5px 10px rgba(58,74,120,.18),0 8px 16px -10px rgba(58,74,120,.5)}
+.bb.b1{width:16%;aspect-ratio:1;right:2%;top:10%;background:radial-gradient(circle at 32% 28%,#fff 0 10%,var(--pink-a) 30%,var(--pink-b) 65%,var(--pink-c))}
+.bb.b2{width:9%;aspect-ratio:1;left:4%;bottom:16%;background:radial-gradient(circle at 32% 28%,#fff 0 10%,#ece6fb 30%,#d4c8f3 65%,#a99bd8)}
+.bb.b3{width:6%;aspect-ratio:1;right:14%;bottom:6%;background:radial-gradient(circle at 32% 28%,#fff 0 10%,var(--blue-a) 30%,var(--blue-b) 65%,var(--blue-c))}
+@media(max-width:720px){.orb{order:-1;max-width:230px}}

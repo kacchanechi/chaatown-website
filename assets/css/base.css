@@ -1,0 +1,47 @@
+/* =====================================================================
+   ChaaTown - base.css
+   Fondasi bersama semua halaman: warna tema (terang & gelap), reset,
+   navigasi, footer, toast, dan aksesibilitas.
+   Urutan pemuatan di tiap halaman: base.css -> <halaman>.css -> glass.css
+   ===================================================================== */
+
+/* ---------- Warna tema ---------- */
+:root{
+  --bg:#f2f6fd; --bg2:#e4ecf9; --ink:#3a4a78; --muted:#6b789f; --grass:#aac1e9; --dirt:#dbe3f6;
+  --lamp:#f9c8d5; --card:#ffffff; --line:#7f99cc; --shade:#c9d7f2; --sky-glow:#e5ecfa; --bld:#94b0de; --win:#ffffff;
+  --lav:#d4c8f3; --s1:#94b0de; --s2:#f2a3bb; --s3:#f5d47a;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#232a4d;--bg2:#2c3560;--ink:#eaf0ff;--muted:#b8c3ea;--grass:#8fb0e6;--dirt:#3a4478;--lamp:#f7bfd0;--card:#2f3868;--line:#a9bce8;--shade:#1a2040;--sky-glow:#3a4478;--bld:#5a76b8;--win:#fff0f5;--lav:#7e70b8;--s1:#ffffff;--s2:#f7bfd0;--s3:#ffe39a}
+}
+:root[data-theme="dark"]{--bg:#232a4d;--bg2:#2c3560;--ink:#eaf0ff;--muted:#b8c3ea;--grass:#8fb0e6;--dirt:#3a4478;--lamp:#f7bfd0;--card:#2f3868;--line:#a9bce8;--shade:#1a2040;--sky-glow:#3a4478;--bld:#5a76b8;--win:#fff0f5;--lav:#7e70b8;--s1:#ffffff;--s2:#f7bfd0;--s3:#ffe39a}
+
+/* ---------- Reset & tipografi dasar ---------- */
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink)}
+h1,h2,h3{font-family:"Silkscreen","Courier New",monospace;line-height:1.1;margin:0}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--lamp);outline-offset:3px}
+.wrap{max-width:1040px;margin:0 auto;padding:0 22px}
+
+/* ---------- Navigasi ---------- */
+nav{display:flex;justify-content:space-between;align-items:center;padding:18px 0;gap:12px;flex-wrap:wrap}
+nav b{font-family:"Silkscreen",monospace;font-size:18px}
+.logo{width:40px;height:40px;border-radius:50%;object-fit:cover;background:var(--card);border:2px solid var(--line);vertical-align:middle;margin-right:10px}
+.navb{display:flex;gap:8px;flex-wrap:wrap}
+nav a.d{font-weight:700;text-decoration:none;border:2px solid var(--line);padding:6px 14px}
+nav a.d:hover{background:var(--ink);color:var(--bg)}
+nav a.d[aria-current="page"]{background:var(--lamp);color:#26305a}
+@media(max-width:560px){nav{flex-direction:column;align-items:flex-start}nav a.d{padding:6px 12px;font-size:15px}}
+
+/* ---------- Footer ---------- */
+footer{text-align:center;color:var(--muted);font-size:14px;border-top:2px solid var(--line)}
+.love{font-size:16px;margin:0 0 6px;color:var(--ink)}
+
+/* ---------- Toast (notifikasi kecil, misalnya "IP tersalin") ---------- */
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 18px;font-weight:700;opacity:0;pointer-events:none;transition:.25s}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- Aksesibilitas: kurangi gerakan ---------- */
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}

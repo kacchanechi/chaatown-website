@@ -1,0 +1,63 @@
+/* =====================================================================
+   ChaaTown - discord.css (khusus discord.html: Chatizen Guild Bar)
+   Dimuat setelah base.css dan sebelum glass.css.
+   ===================================================================== */
+
+html{scroll-behavior:smooth;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:var(--bg);font:400 17px/1.65 "DM Sans",system-ui,sans-serif}
+
+/* ---------- Hero ---------- */
+.hero{background:linear-gradient(var(--bg) 0%,var(--sky-glow) 100%);overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:24px;align-items:center;padding-top:26px}
+h1{font-size:clamp(40px,8.5vw,84px);font-weight:700;letter-spacing:-1px;max-width:11ch}
+.sub{max-width:46ch;color:var(--muted);font-size:19px;margin:22px 0 28px}
+.btn{display:inline-block;font:700 18px "DM Sans",sans-serif;text-decoration:none;background:var(--lamp);color:#26305a;border:2px solid var(--line);padding:14px 28px;box-shadow:5px 5px 0 var(--shade);cursor:pointer}
+.btn:hover{transform:translate(2px,2px);box-shadow:3px 3px 0 var(--shade)}
+.btn.o{background:transparent;color:var(--ink);margin-left:8px}
+.mw{position:relative;justify-self:center;max-width:320px;width:100%;padding-top:70px}
+.mascot{display:block;width:100%;animation:bob 4s ease-in-out infinite;filter:drop-shadow(0 12px 18px rgba(90,118,184,.25))}
+@keyframes bob{50%{transform:translateY(-10px)}}
+.bubble{position:absolute;top:0;right:0;background:var(--card);border:2px solid var(--line);padding:10px 14px;font-weight:700;font-size:15px;max-width:210px;box-shadow:4px 4px 0 var(--shade)}
+.bubble::after{content:"";position:absolute;left:34px;bottom:-12px;width:14px;height:14px;background:var(--card);border-right:2px solid var(--line);border-bottom:2px solid var(--line);transform:rotate(45deg)}
+#bar{display:block;width:100%;height:auto;margin-top:34px;image-rendering:pixelated}
+.counter{height:22px;background:var(--lav);border-bottom:22px solid var(--dirt)}
+
+/* ---------- Section & kartu ---------- */
+section{padding:72px 0}
+h2{font-size:clamp(26px,5vw,42px);margin-bottom:12px}
+.lead{color:var(--muted);max-width:52ch;margin:0 0 36px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:20px}
+.f{background:var(--card);border:2px solid var(--line);padding:22px}
+.f:nth-child(odd){box-shadow:6px 6px 0 var(--grass)}
+.f:nth-child(even){box-shadow:6px 6px 0 var(--lamp)}
+.f h3{font-size:18px;margin-bottom:8px}
+.f p{margin:0;color:var(--muted);font-size:16px}
+.alt{background:var(--bg2)}
+
+/* ---------- Menu bar (daftar channel) ---------- */
+.menu{background:var(--card);border:2px solid var(--line);padding:26px 24px;max-width:720px;box-shadow:8px 8px 0 var(--lav)}
+.menu h3{font-size:20px;margin-bottom:18px;text-align:center}
+.it{display:flex;align-items:baseline;gap:8px;margin:0 0 14px}
+.it b{font-family:"Silkscreen",monospace;font-size:16px;white-space:nowrap}
+.it i{flex:1;border-bottom:2px dotted var(--line);min-width:16px;transform:translateY(-4px)}
+.it span{color:var(--muted);font-size:15px;text-align:right;max-width:24ch}
+
+/* ---------- Aturan bar ---------- */
+.rules{display:grid;gap:14px;max-width:720px;margin:0;padding:0;list-style:none;counter-reset:r}
+.rules li{background:var(--card);border:2px solid var(--line);padding:16px 18px;counter-increment:r;display:grid;grid-template-columns:44px 1fr;gap:16px;align-items:start}
+.rules b{display:block;margin-bottom:4px}
+
+/* ---------- Ajakan gabung & footer ---------- */
+.cta{text-align:center}
+.cta .wrap{max-width:720px}
+.cta .lead{margin:0 auto 28px}
+footer{padding:26px 0}
+
+/* ---------- Tampilan HP ---------- */
+@media(max-width:720px){.hero-grid{grid-template-columns:1fr}.mw{max-width:230px;order:-1}.it{flex-wrap:wrap}.it span{max-width:none;text-align:left;flex-basis:100%}.it i{display:none}.btn.o{margin:12px 0 0}}
+
+/* ---------- Nomor aturan & kategori channel ---------- */
+.rules li::before{content:counter(r);font:700 22px "Silkscreen",monospace;background:var(--grass);color:#26305a;width:44px;height:44px;display:grid;place-items:center}
+.rules li:nth-child(even)::before{background:var(--lamp)}
+.cat{font:700 13px "Silkscreen",monospace;color:var(--muted);margin:22px 0 12px}
+.menu h3+.cat{margin-top:0}
