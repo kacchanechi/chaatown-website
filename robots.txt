@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://www.chaatown.my.id/sitemap.xml
+Sitemap: https://chaatown.my.id/sitemap.xml
