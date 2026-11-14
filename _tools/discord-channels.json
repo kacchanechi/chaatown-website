@@ -1,0 +1,23 @@
+{
+  "_catatan": "Data untuk _tools/sync-discord.js. Kunci = channel ID Discord. 'nama' opsional (kalau kosong, nama diambil dari Discord lalu dirapikan). Channel yang tidak terlihat member biasa otomatis tidak ditulis. 'beku' = kategori yang disalin apa adanya dari halaman.",
+  "guild": "1338010772860833814",
+  "beku": ["1547561890467684385"],
+  "channel": {
+    "1338012589334069379": { "_discord": "rules",          "desc": "Aturan server yang wajib dibaca" },
+    "1554896929270534174": { "_discord": "ip-server",      "desc": "Alamat dan cara masuk server Minecraft" },
+    "1547564244822659144": { "_discord": "about-server",   "desc": "Info lengkap seputar server" },
+    "1547568573155643442": { "_discord": "entrance",       "desc": "Sambutan untuk warga baru yang bergabung" },
+
+    "1549593012785520660": { "_discord": "announcement",            "nama": "Announcement", "desc": "Pengumuman penting seputar server" },
+    "1547565716998193263": { "_discord": "livestream-notification", "nama": "Live Stream",  "desc": "Kabar kalau Achaa lagi livestream" },
+    "1544968424910749696": { "_discord": "donation",                "nama": "Donation",     "desc": "Notifikasi donasi yang masuk" },
+    "1569004000064577677": { "_discord": "rank-list",               "desc": "Daftar rank dan keuntungannya" },
+
+    "1547447663832858695": { "_discord": "general",        "nama": "General",        "desc": "Ngobrol bebas sehari-hari" },
+    "1547564446161834034": { "_discord": "minecraft-chat", "nama": "Minecraft Chat", "desc": "Bahas server dan mabar Minecraft" },
+    "1549593695173476362": { "_discord": "meme (sekarang tidak terlihat member -> otomatis tidak ditulis)", "nama": "Pojok Meme", "desc": "Meme dan hal random" },
+
+    "1355468174648410183": { "_discord": "join to create (bot TempVoice)", "nama": "Voice Room", "desc": "Ngobrol langsung sambil mabar" },
+    "1355467377701158932": { "_discord": "interface (bot TempVoice)", "sembunyi": true }
+  }
+}
