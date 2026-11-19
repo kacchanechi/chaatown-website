@@ -30,6 +30,21 @@ h1{font-size:34px;margin-top:20px}
 .pill.hl{background:var(--lamp);color:#26305a}
 .pill.hl small{color:#4a5378}
 
+/* ---------- Pesan & profil pembuat website ---------- */
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.dev{margin-top:40px;padding-top:30px;border-top:1.5px dashed var(--line)}
+.ucap{padding:20px 22px;border-radius:22px;background:var(--card);border:1.5px solid var(--line);color:var(--muted);font-size:15px;line-height:1.65}
+.ucap p{margin:0 0 10px}
+.ucap p:last-child{margin:0}
+.ucap p:first-child{color:var(--ink);font-weight:700;font-size:16px}
+.dev-k{display:inline-flex;flex-direction:column;align-items:center;margin-top:22px;padding:10px 22px 12px;border-radius:22px;text-decoration:none;color:inherit;transition:transform .15s}
+.dev-k:hover{transform:translateY(-2px)}
+.dev-k .av{width:88px;height:88px;border-radius:50%;object-fit:cover;margin-bottom:10px;background:var(--card);border:2px solid var(--line)}
+.dev-k b{font-size:18px}
+.dev-k > span{font-size:14px;color:var(--muted)}
+.dev-k .dc{margin-top:6px;font-size:12px;font-weight:700;color:var(--muted);text-decoration:underline}
+.dev-k:hover .dc{color:var(--ink)}
+
 /* ---------- Skyline & footer ---------- */
 #sky{display:block;width:100%;height:auto;image-rendering:pixelated}
 .strip{height:22px;background:var(--grass);border-bottom:22px solid var(--dirt)}

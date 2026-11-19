@@ -142,3 +142,8 @@ ol li{position:relative;z-index:1}
   .oform select,.oform input{background:var(--bg)}
   .orb::before,.mw::after{background:radial-gradient(circle at 32% 26%,rgba(255,255,255,.95) 0 5%,rgba(255,255,255,.4) 16%,rgba(170,193,233,.35) 48%,rgba(127,153,204,.45) 100%)}
 }
+
+/* ---------- Pesan pembuat website (about): ikut gaya kaca ---------- */
+.ucap{background:linear-gradient(165deg,var(--glass-hi),var(--glass));border:1.5px solid var(--rim);box-shadow:var(--soft),var(--gloss);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.dev{border-top-color:var(--rim)}
+@media(max-width:720px){.ucap{-webkit-backdrop-filter:none;backdrop-filter:none}}
