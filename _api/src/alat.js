@@ -12,6 +12,10 @@ export function alihkan(ke, headers = {}) {
 
 export const sekarang = () => Math.floor(Date.now() / 1000);
 
+export const ARSIP = 'arsip'; // pemilik khusus 12 foto lama (Fase G4b), bukan akun Discord
+/** Alamat gambar: foto lama = file situs (galeri/...), foto upload = /img/<id>.<jenis> dari R2 */
+export const srcFoto = f => f.berkas ? '/' + f.berkas : '/img/' + f.id + '.' + f.jenis;
+
 export function acak(byte = 32) {
   const a = crypto.getRandomValues(new Uint8Array(byte));
   return btoa(String.fromCharCode(...a)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');

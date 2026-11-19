@@ -1,7 +1,7 @@
 /* =====================================================================
    foto.js - daftar foto, upload, dan penyajian gambar
    ===================================================================== */
-import { json, galat, sekarang, asalSah, rapikanTeks, cekBatas } from './alat.js';
+import { json, galat, sekarang, asalSah, rapikanTeks, cekBatas, ARSIP, srcFoto } from './alat.js';
 import { periksaGambar, Tolak } from './berkas.js';
 import { sesiDari, devAktif } from './masuk.js';
 import { kabariMod, jumlahMenunggu, jumlahLaporan } from './mod.js';
@@ -39,18 +39,22 @@ export async function daftar(req, env, ctx, url) {
   const sebelum = angka(url.searchParams.get('sebelum'), 2e9);
   const s = await sesiDari(req, env);
   const { results } = await env.DB.prepare(
-    "SELECT f.id, f.jenis, f.nick, f.caption, f.lebar, f.tinggi, f.dibuat, p.nama, p.avatar, p.id AS pid, " +
+    "SELECT f.id, f.jenis, f.nick, f.caption, f.lebar, f.tinggi, f.dibuat, f.berkas, p.nama, p.avatar, p.id AS pid, " +
     "(SELECT COUNT(*) FROM suka x WHERE x.foto_id = f.id) AS suka, " +
     "(SELECT COUNT(*) FROM komentar k WHERE k.foto_id = f.id AND k.status = 'tampil') AS komentar, " +
     "EXISTS (SELECT 1 FROM suka x WHERE x.foto_id = f.id AND x.pengguna_id = ?2) AS disukai " +
     "FROM foto f JOIN pengguna p ON p.id = f.pengguna_id WHERE f.status = 'tayang' AND f.dibuat < ?1 ORDER BY f.dibuat DESC LIMIT 60"
   ).bind(sebelum, s ? s.id : '').all();
+  // Semua foto lama yang sudah tercatat (apa pun statusnya): halaman memakai ini supaya
+  // daftar foto lama bawaan halaman tidak ditampilkan dobel, dan yang diturunkan mod tidak muncul lagi.
+  const { results: arsip } = await env.DB.prepare('SELECT berkas FROM foto WHERE berkas IS NOT NULL').all();
   return json({
     foto: results.map(r => ({
-      id: r.id, src: '/img/' + r.id + '.' + r.jenis, nick: r.nick, caption: r.caption, lebar: r.lebar, tinggi: r.tinggi, dibuat: r.dibuat,
-      suka: r.suka, komentar: r.komentar, disukai: !!r.disukai,
-      pemilik: { id: r.pid, nama: r.nama, avatar: r.avatar }
-    }))
+      id: r.id, src: srcFoto(r), nick: r.nick, caption: r.caption, lebar: r.lebar, tinggi: r.tinggi, dibuat: r.dibuat,
+      suka: r.suka, komentar: r.komentar, disukai: !!r.disukai, arsip: !!r.berkas,
+      pemilik: r.pid === ARSIP ? null : { id: r.pid, nama: r.nama, avatar: r.avatar }
+    })),
+    berkasArsip: arsip.map(a => a.berkas)
   });
 }
 

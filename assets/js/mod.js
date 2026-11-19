@@ -115,7 +115,8 @@
     var dl = el('dl', 'mk-m');
     function baris(dt, dd) { dl.appendChild(el('dt', null, dt)); dl.appendChild(el('dd', null, dd)); }
     baris('Nick MC', f.nick);
-    baris('Akun Discord', f.pengguna.nama + ' (ID ' + f.pengguna.id + ')' + (f.pengguna.diblokir ? ', diblokir' : ''));
+    if (f.pengguna.arsip) baris('Pemilik', 'Foto lama galeri (bukan akun Discord)');
+    else baris('Akun Discord', f.pengguna.nama + ' (ID ' + f.pengguna.id + ')' + (f.pengguna.diblokir ? ', diblokir' : ''));
     baris('Ukuran', f.lebar + ' × ' + f.tinggi + ' px, ' + kb(f.ukuran));
     baris('Dikirim', relatif(f.dibuat));
     if (f.status !== 'menunggu' && f.dicekPada) baris(f.status === 'tayang' ? 'Disetujui' : 'Ditolak', (f.dicekOleh || 'mod') + ', ' + relatif(f.dicekPada));
@@ -131,7 +132,7 @@
           function (e) { t.disabled = false; err.textContent = e.message; });
       }));
       aksi.appendChild(tombol(f.status === 'tayang' ? 'Turunkan...' : 'Tolak...', 'merah', function () { alih(fTolak); }));
-      if (!f.pengguna.diblokir) aksi.appendChild(tombol('Blokir pengupload...', 'o', function () { alih(fBlokir); }));
+      if (!f.pengguna.diblokir && !f.pengguna.arsip) aksi.appendChild(tombol('Blokir pengupload...', 'o', function () { alih(fBlokir); }));
       b.appendChild(aksi); b.appendChild(fTolak); b.appendChild(fBlokir);
     }
     b.appendChild(err);
@@ -148,9 +149,11 @@
     lblL.hidden = inp.hidden = true;
     sel.addEventListener('change', function () { lblL.hidden = inp.hidden = sel.value !== 'Lainnya'; err.textContent = ''; if (!inp.hidden) inp.focus(); });
     inp.addEventListener('input', function () { err.textContent = ''; });
-    var p = el('p', null, f.status === 'tayang'
-      ? 'Foto akan hilang dari galeri dan filenya dihapus. Pemiliknya bisa melihat alasannya di "Fotoku".'
-      : 'Filenya akan dihapus. Pemiliknya bisa melihat alasannya di "Fotoku".');
+    var p = el('p', null, f.arsip
+      ? 'Foto lama ini akan disembunyikan dari galeri. File aslinya tetap ada di situs (aset terkunci).'
+      : f.status === 'tayang'
+        ? 'Foto akan hilang dari galeri dan filenya dihapus. Pemiliknya bisa melihat alasannya di "Fotoku".'
+        : 'Filenya akan dihapus. Pemiliknya bisa melihat alasannya di "Fotoku".');
     var aksi = el('div', 'ract');
     aksi.appendChild(tombol(f.status === 'tayang' ? 'Turunkan foto' : 'Tolak foto', 'merah', function () {
       var alasan = sel.value === 'Lainnya' ? inp.value.trim() : sel.value, t = this;
@@ -225,7 +228,7 @@
     function baris(dt, dd) { dl.appendChild(el('dt', null, dt)); dl.appendChild(el('dd', null, dd)); }
     if (l.foto) { baris('Caption', l.foto.caption || 'Tanpa caption'); baris('Nick MC', l.foto.nick); }
     else { baris('Di foto', l.komentar.foto.caption || 'Tanpa caption'); if (l.komentar.status !== 'tampil') baris('Status', 'Disembunyikan' + (l.komentar.alasan ? ' (' + l.komentar.alasan + ')' : '')); }
-    baris(l.foto ? 'Pemilik' : 'Penulis', l.pemilik.nama + ' (ID ' + l.pemilik.id + ')');
+    baris(l.foto ? 'Pemilik' : 'Penulis', l.pemilik.arsip ? 'Foto lama galeri (bukan akun Discord)' : l.pemilik.nama + ' (ID ' + l.pemilik.id + ')');
     baris('Alasan laporan', l.alasan.join(' · '));
     baris('Laporan pertama', relatif(l.pertama));
     b.appendChild(dl);

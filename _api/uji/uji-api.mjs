@@ -155,10 +155,11 @@ const rm = await fetch(B + '/api/auth/dev?id=' + idUji + '5&nama=' + encodeURICo
 const m = { sc: rm.headers.get('set-cookie') || '' }; m.cookie = (m.sc.match(/__Host-sesi=[^;]+/) || [''])[0];
 cek('Sesi mod cuma 12 jam', /Max-Age=43200/.test(m.sc), m.sc);
 const sm = await j(await fetch(B + '/api/saya', { headers: { Cookie: m.cookie } }));
-cek('Mod: /api/saya memberi tahu jumlah antrean', sm.mod === true && sm.antreanMod >= 5, JSON.stringify(sm));
+const menungguA = (await j(await fetch(B + '/api/foto/saya', { headers: { Cookie: a.cookie } }))).foto.filter(f => f.status === 'menunggu').length;
+cek('Mod: /api/saya memberi tahu jumlah antrean', sm.mod === true && menungguA >= 2 && sm.antreanMod >= menungguA, menungguA + ' / ' + JSON.stringify(sm));
 const antre = await j(await fetch(B + '/api/mod/foto?status=menunggu', { headers: { Cookie: m.cookie } }));
 const kartuUp = antre.foto.find(f => f.id === up.id);
-cek('Mod: foto muncul di antrean + data pengupload', !!kartuUp && kartuUp.pengguna.nama === 'Pemain Uji' && kartuUp.nick === NICK_UJI && antre.jumlah.menunggu >= 5);
+cek('Mod: foto muncul di antrean + data pengupload', !!kartuUp && kartuUp.pengguna.nama === 'Pemain Uji' && kartuUp.nick === NICK_UJI && antre.jumlah.menunggu >= menungguA);
 cek('Mod: antrean urut dari yang paling lama', antre.foto.every((f, i, x) => !i || x[i - 1].dibuat <= f.dibuat));
 cek('Mod: bisa melihat gambar yang belum tayang', (await fetch(img, { headers: { Cookie: m.cookie } })).status === 200);
 cek('Status tidak dikenal ditolak', (await fetch(B + '/api/mod/foto?status=x', { headers: { Cookie: m.cookie } })).status === 400);
@@ -249,6 +250,29 @@ cek('Bukan mod: tidak bisa melepas nickname', (await pj('/api/mod/nick', c.cooki
 r = await pj('/api/mod/nick', m.cookie, { nick: NICK_LEPAS, aksi: 'lepas' });
 cek('Mod melepas nickname -> bebas lagi, kuota nick pemilik berkurang', r.status === 200 && !(await j(await fetch(B + '/api/mod/nick', { headers: { Cookie: m.cookie } }))).nick.some(n => n.nick === NICK_LEPAS)
   && (await j(await fetch(B + '/api/saya', { headers: { Cookie: c.cookie } }))).nick.length === 2);
+
+/* ---------- 5. 12 foto lama jadi post (Fase G4b). Uji ini TIDAK merusak: suka dibatalkan, komentar dihapus. ---------- */
+console.log('== Foto lama (arsip)');
+const feed = await j(await fetch(B + '/api/foto'));
+const lama = feed.foto.filter(f => f.arsip);
+const ID_LAMA = 'a2c1f000-0000-4000-8000-000000000002'; // lodge-salju.webp, milik Gikx
+cek('Daftar berkas foto lama yang tercatat: 12', Array.isArray(feed.berkasArsip) && feed.berkasArsip.length === 12, (feed.berkasArsip || []).length);
+const fl = lama.find(f => f.id === ID_LAMA);
+cek('Foto lama tampil dari file situs, tanpa akun Discord pemilik', !!fl && fl.src === '/galeri/lodge-salju.webp' && fl.pemilik === null && fl.nick === 'Gikx' && fl.caption === 'New Empire', JSON.stringify(fl));
+cek('Foto berdua tetap tercatat "BlaZeSZ & Foksunee"', lama.some(f => f.nick === 'BlaZeSZ & Foksunee' && f.src === '/galeri/pertarungan-gua.webp') || feed.berkasArsip.includes('galeri/pertarungan-gua.webp'));
+const sl = await login(idUji + '8', 'Penggemar Lama');
+const s1 = await j(await pj('/api/foto/suka', sl.cookie, { id: ID_LAMA, suka: true }));
+const s0 = await j(await pj('/api/foto/suka', sl.cookie, { id: ID_LAMA, suka: false }));
+cek('Foto lama bisa disukai (lalu dibatalkan lagi)', s1.disukai === true && s0.disukai === false && s1.suka === s0.suka + 1);
+r = await pj('/api/foto/komentar', sl.cookie, { id: ID_LAMA, isi: 'Foto lama favoritku' }); const kl = (await j(r)).komentar;
+cek('Foto lama bisa dikomentari', r.status === 201 && (await j(await fetch(B + '/api/foto/komentar?id=' + ID_LAMA))).komentar.some(k => k.id === kl.id));
+cek('(komentar uji dihapus lagi)', (await pj('/api/foto/komentar/hapus', sl.cookie, { id: kl.id })).status === 200);
+cek('Akun "Galeri lama" tidak bisa diblokir', (await pj('/api/mod/pengguna', m.cookie, { id: 'arsip', blokir: true, alasan: 'uji' })).status === 400);
+const rl = await fetch(B + '/api/auth/dev?id=arsip&nama=x', { redirect: 'manual' });
+cek('Akun "Galeri lama" tidak bisa dipakai login', !(await j(await fetch(B + '/api/saya', { headers: { Cookie: (rl.headers.get('set-cookie') || '').match(/__Host-sesi=[^;]+/)?.[0] || '' } }))).id?.includes('arsip'));
+const mt = await j(await fetch(B + '/api/mod/foto?status=tayang', { headers: { Cookie: m.cookie } }));
+cek('Mod: foto lama ditandai pemilik "Galeri lama"', !mt.foto.length || mt.foto.filter(f => f.arsip).every(f => f.pengguna.arsip && f.src.startsWith('/galeri/')) );
+cek('Nick foto lama tetap dipesan', (await kirim(c.cookie, { nick: 'Veneznia' })).status === 409);
 
 console.log('== Suka');
 await pj('/api/mod/foto', m.cookie, { id: fs1.id, aksi: 'setujui' });

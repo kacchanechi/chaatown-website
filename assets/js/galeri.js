@@ -37,14 +37,17 @@
   function cekDapur() { return dapur || (dapur = ambil('/api/saya')); }
 
   // Sumber data. Hasilnya selalu berbentuk: [{src, players:[nama...], caption}]
+  // Sejak Fase G4b, 12 foto lama juga tercatat di dapur (bisa disukai & dikomentari). Daftar PHOTOS
+  // di atas hanya dipakai untuk foto lama yang BELUM tercatat (misalnya saat dapur belum aktif).
   function muat() {
     var arsip = PHOTOS.map(function (p) {
-      return { src: ROOT + p.file, players: p.player.split(/\s*&\s*/), caption: p.caption || '' };
+      return { file: p.file, src: ROOT + p.file, players: p.player.split(/\s*&\s*/), caption: p.caption || '' };
     });
     return cekDapur().then(function () { return ambil('/api/foto'); }).then(function (d) {
+      var tercatat = d.berkasArsip || []; // termasuk yang diturunkan mod, supaya tidak muncul lagi dari PHOTOS
       return (d.foto || []).map(function (f) {
-        return { id: f.id, src: f.src, players: [f.nick], caption: f.caption || '', suka: f.suka || 0, komentar: f.komentar || 0, disukai: !!f.disukai, pemilik: f.pemilik };
-      }).concat(arsip);
+        return { id: f.id, src: f.src, players: f.nick.split(/\s*&\s*/), caption: f.caption || '', suka: f.suka || 0, komentar: f.komentar || 0, disukai: !!f.disukai, pemilik: f.pemilik };
+      }).concat(arsip.filter(function (p) { return tercatat.indexOf(p.file) < 0; }));
     }, function () { return arsip; });
   }
 

@@ -9,7 +9,7 @@
    - Notifikasi ke channel mod lewat webhook: paling sering 1x per 10 menit,
      tanpa isi dari pengupload (jadi tidak bisa disalahgunakan untuk mention).
    ===================================================================== */
-import { json, galat, sekarang, asalSah, rapikanTeks, bacaJson } from './alat.js';
+import { json, galat, sekarang, asalSah, rapikanTeks, bacaJson, ARSIP, srcFoto } from './alat.js';
 import { sesiDari } from './masuk.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -41,7 +41,8 @@ async function turunkanFoto(env, m, f, alasan) {
   const r = await env.DB.prepare("UPDATE foto SET status = 'ditolak', dicek_oleh = ?2, dicek_pada = ?3, alasan = ?4 WHERE id = ?1 AND status = ?5")
     .bind(f.id, m.id, sekarang(), alasan, f.status).run();
   if (!r.meta.changes) return false;
-  await env.FOTO.delete('foto/' + f.id + '.' + f.jenis); // konten yang ditolak tidak disimpan
+  // Konten upload yang ditolak tidak disimpan. Foto lama (berkas) adalah file situs: hanya disembunyikan, file tidak disentuh.
+  if (!f.berkas) await env.FOTO.delete('foto/' + f.id + '.' + f.jenis);
   await env.DB.batch([
     env.DB.prepare("UPDATE laporan SET status = 'selesai' WHERE jenis = 'foto' AND target_id = ?1 AND status = 'baru'").bind(f.id),
     catat(env, m, f.status === 'tayang' ? 'turunkan' : 'tolak', { foto: f.id, pengguna: f.pengguna_id, alasan })
@@ -56,7 +57,7 @@ export async function daftarMod(req, env, ctx, url) {
   if (!['menunggu', 'tayang', 'ditolak'].includes(status)) return galat(400, 'Status tidak dikenal.');
   const urut = status === 'menunggu' ? 'ASC' : 'DESC'; // antrean: yang paling lama menunggu dulu
   const { results } = await env.DB.prepare(
-    'SELECT f.id, f.jenis, f.nick, f.caption, f.lebar, f.tinggi, f.ukuran, f.dibuat, f.dicek_pada, f.alasan, ' +
+    'SELECT f.id, f.jenis, f.nick, f.caption, f.lebar, f.tinggi, f.ukuran, f.dibuat, f.dicek_pada, f.alasan, f.berkas, ' +
     'p.id AS pid, p.nama, p.avatar, p.diblokir, c.nama AS dicek_nama ' +
     'FROM foto f JOIN pengguna p ON p.id = f.pengguna_id LEFT JOIN pengguna c ON c.id = f.dicek_oleh ' +
     'WHERE f.status = ?1 ORDER BY f.dibuat ' + urut + ' LIMIT 50'
@@ -64,10 +65,11 @@ export async function daftarMod(req, env, ctx, url) {
   return json({
     jumlah: await jumlah(env),
     foto: results.map(r => ({
-      id: r.id, status, src: status === 'ditolak' ? null : '/img/' + r.id + '.' + r.jenis,
+      // foto upload yang ditolak sudah tidak punya file; foto lama selalu masih punya (file situs)
+      id: r.id, status, src: status === 'ditolak' && !r.berkas ? null : srcFoto(r), arsip: !!r.berkas,
       nick: r.nick, caption: r.caption, lebar: r.lebar, tinggi: r.tinggi, ukuran: r.ukuran, dibuat: r.dibuat,
       dicekPada: r.dicek_pada, dicekOleh: r.dicek_nama, alasan: r.alasan,
-      pengguna: { id: r.pid, nama: r.nama, avatar: r.avatar, diblokir: !!r.diblokir }
+      pengguna: { id: r.pid, nama: r.nama, avatar: r.avatar, diblokir: !!r.diblokir, arsip: r.pid === ARSIP }
     }))
   });
 }
@@ -79,7 +81,7 @@ export async function aksiFoto(req, env) {
   if (!m) return galat(403, 'Halaman ini khusus mod.');
   const b = await bacaJson(req);
   if (!b || !UUID.test(String(b.id || ''))) return galat(400, 'Permintaan tidak valid.');
-  const f = await env.DB.prepare('SELECT id, jenis, status, pengguna_id FROM foto WHERE id = ?1').bind(b.id).first();
+  const f = await env.DB.prepare('SELECT id, jenis, status, pengguna_id, berkas FROM foto WHERE id = ?1').bind(b.id).first();
   if (!f) return galat(404, 'Foto tidak ditemukan.');
   const t = sekarang();
 
@@ -169,14 +171,14 @@ export async function daftarLaporan(req, env) {
   for (const l of results) {
     const o = { jenis: l.jenis, id: l.target_id, jumlah: l.n, pertama: l.pertama, alasan: [...new Set(String(l.alasan || '').split(' | '))] };
     if (l.jenis === 'foto') {
-      const f = await env.DB.prepare('SELECT f.id, f.jenis, f.nick, f.caption, f.status, p.id AS pid, p.nama FROM foto f JOIN pengguna p ON p.id = f.pengguna_id WHERE f.id = ?1').bind(l.target_id).first();
+      const f = await env.DB.prepare('SELECT f.id, f.jenis, f.nick, f.caption, f.status, f.berkas, p.id AS pid, p.nama FROM foto f JOIN pengguna p ON p.id = f.pengguna_id WHERE f.id = ?1').bind(l.target_id).first();
       if (!f) continue;
-      o.foto = { src: f.status === 'ditolak' ? null : '/img/' + f.id + '.' + f.jenis, nick: f.nick, caption: f.caption, status: f.status };
-      o.pemilik = { id: f.pid, nama: f.nama };
+      o.foto = { src: f.status === 'ditolak' && !f.berkas ? null : srcFoto(f), nick: f.nick, caption: f.caption, status: f.status, arsip: !!f.berkas };
+      o.pemilik = { id: f.pid, nama: f.nama, arsip: f.pid === ARSIP };
     } else {
-      const k = await env.DB.prepare('SELECT k.isi, k.status, k.alasan, k.foto_id, f.jenis, f.caption, p.id AS pid, p.nama FROM komentar k JOIN pengguna p ON p.id = k.pengguna_id JOIN foto f ON f.id = k.foto_id WHERE k.id = ?1').bind(l.target_id).first();
+      const k = await env.DB.prepare('SELECT k.isi, k.status, k.alasan, k.foto_id, f.jenis, f.caption, f.berkas, p.id AS pid, p.nama FROM komentar k JOIN pengguna p ON p.id = k.pengguna_id JOIN foto f ON f.id = k.foto_id WHERE k.id = ?1').bind(l.target_id).first();
       if (!k) continue;
-      o.komentar = { isi: k.isi, status: k.status, alasan: k.alasan, foto: { id: k.foto_id, src: '/img/' + k.foto_id + '.' + k.jenis, caption: k.caption } };
+      o.komentar = { isi: k.isi, status: k.status, alasan: k.alasan, foto: { id: k.foto_id, src: srcFoto({ id: k.foto_id, jenis: k.jenis, berkas: k.berkas }), caption: k.caption } };
       o.pemilik = { id: k.pid, nama: k.nama };
     }
     isi.push(o);
@@ -207,7 +209,7 @@ export async function aksiLaporan(req, env) {
   const alasan = rapikanTeks(b.alasan, 150);
   if (alasan.length < 3) return galat(400, 'Tulis alasannya.');
   if (b.jenis === 'foto') {
-    const f = await env.DB.prepare('SELECT id, jenis, status, pengguna_id FROM foto WHERE id = ?1').bind(b.id).first();
+    const f = await env.DB.prepare('SELECT id, jenis, status, pengguna_id, berkas FROM foto WHERE id = ?1').bind(b.id).first();
     if (!f) return galat(404, 'Foto tidak ditemukan.');
     if (f.status === 'ditolak') { await tutup.run(); return json({ ok: true }); }
     if (!(await turunkanFoto(env, m, f, alasan))) return galat(409, 'Status foto sudah berubah. Muat ulang daftarnya.');
