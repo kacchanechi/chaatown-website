@@ -1,0 +1,13 @@
+# Contoh isi file kunci rahasia untuk menjalankan dapur galeri di komputer.
+# 1. Salin file ini menjadi:  _api/.dev.vars   (file itu otomatis TIDAK ikut git)
+# 2. Isi nilainya. Jangan pernah tempel isi .dev.vars ke chat, Discord, atau commit.
+
+# Dari Discord Developer Portal > aplikasi bot ChaaTown > OAuth2
+DISCORD_CLIENT_ID=
+DISCORD_CLIENT_SECRET=
+
+# Kunci uji resmi Cloudflare Turnstile (selalu lolos). Diganti kunci asli saat G6.
+TURNSTILE_SECRET=1x0000000000000000000000000000000AA
+
+# 1 = aktifkan tombol "Masuk (uji)" tanpa Discord. Hanya jalan di localhost.
+DEV_LOGIN=1

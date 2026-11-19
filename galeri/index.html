@@ -49,11 +49,47 @@
     <div class="grid" id="grid"></div>
     <div class="empty" id="empty" hidden><b>Belum ada foto</b>Foto dari para pemain akan muncul di sini.</div>
 
-    <section class="up" aria-labelledby="up-h">
+    <section class="up" id="up" aria-labelledby="up-h">
       <h2 id="up-h">Upload fotomu sendiri</h2>
-      <p><span class="soon-b">Segera hadir</span> Sebentar lagi kamu bisa upload screenshot langsung dari halaman ini, cukup masuk pakai akun Discord. Setiap foto dicek mod dulu sebelum tampil.</p>
-      <p>Sementara itu, kirim screenshot terbaikmu ke forum Galeri di Discord Chatizen Guild Bar.</p>
-      <a class="btn" href="https://discord.gg/txe8h2DSJf" target="_blank" rel="noopener">Buka Discord</a>
+      <p class="info" id="up-info" role="status" hidden></p>
+
+      <!-- Tampil kalau dapur galeri belum aktif (misalnya di GitHub Pages sebelum Fase G6) -->
+      <div id="up-statis">
+        <p><span class="soon-b">Segera hadir</span> Sebentar lagi kamu bisa upload screenshot langsung dari halaman ini, cukup masuk pakai akun Discord. Setiap foto dicek mod dulu sebelum tampil.</p>
+        <p>Sementara itu, kirim screenshot terbaikmu ke forum Galeri di Discord Chatizen Guild Bar.</p>
+        <a class="btn" href="https://discord.gg/txe8h2DSJf" target="_blank" rel="noopener">Buka Discord</a>
+      </div>
+
+      <!-- Belum masuk -->
+      <div id="up-masuk" hidden>
+        <p>Masuk pakai akun Discord untuk upload. Hanya member server Discord ChaaTown yang bisa upload, dan setiap foto dicek mod dulu sebelum tampil.</p>
+        <div class="ract"><a class="btn" id="up-discord" href="/api/auth/masuk?balik=/galeri/">Masuk dengan Discord</a><a class="btn o" id="up-uji" href="/api/auth/dev?balik=/galeri/" hidden>Masuk (uji lokal)</a></div>
+      </div>
+
+      <!-- Sudah masuk -->
+      <div id="up-form" hidden>
+        <div class="akun"><span class="pa" id="up-pa" aria-hidden="true"></span><img class="av" id="up-av" alt="" hidden><span>Masuk sebagai <b id="up-nama"></b></span><button class="lnk" id="up-keluar" type="button">Keluar</button></div>
+        <form id="fu" novalidate>
+          <label class="drop" id="drop" for="fu-file">
+            <input id="fu-file" class="sr" type="file" accept="image/jpeg,image/png,image/webp">
+            <span class="drop-t" id="drop-t"><b>Pilih foto</b> atau seret ke sini<small>JPG, PNG, atau WebP. Nanti dikecilkan otomatis.</small></span>
+            <img id="fu-pv" alt="Pratinjau foto yang dipilih" hidden>
+          </label>
+          <label for="fu-nick">Nickname Minecraft</label>
+          <input id="fu-nick" type="text" maxlength="24" autocomplete="off" spellcheck="false" placeholder="Contoh: Steve123">
+          <label for="fu-cap">Caption <small>(opsional)</small></label>
+          <textarea id="fu-cap" maxlength="150" rows="2" placeholder="Ceritain momen di foto ini"></textarea>
+          <p class="hit" id="fu-hit">0 / 150</p>
+          <div class="ts" id="fu-ts"></div>
+          <p class="err" id="fu-err" role="alert"></p>
+          <button class="btn" id="fu-go" type="submit">Kirim ke antrean</button>
+          <p class="kuota" id="fu-kuota"></p>
+        </form>
+        <div id="mine" hidden>
+          <h3>Fotoku</h3>
+          <ul class="mine" id="mine-l"></ul>
+        </div>
+      </div>
     </section>
   </main>
   <footer>Dibuat dengan 💙 oleh Achaa</footer>

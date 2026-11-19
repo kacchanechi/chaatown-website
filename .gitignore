@@ -1,0 +1,12 @@
+# Repo ini PUBLIK. Jangan pernah commit kunci rahasia.
+
+# Kunci rahasia untuk dapur galeri saat dijalankan di komputer (Client Secret Discord, dll.)
+_api/.dev.vars
+_api/.dev.vars.*
+!_api/.dev.vars.contoh
+.env
+*.env
+
+# Data lokal wrangler (database & gambar uji) dan paket npm
+_api/.wrangler/
+node_modules/

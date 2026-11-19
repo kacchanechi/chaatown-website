@@ -1,0 +1,31 @@
+// Pengaturan dapur galeri ChaaTown (Cloudflare Worker).
+// Fase G2-G5: hanya dijalankan di komputer (npm run dev), tanpa akun Cloudflare.
+// Kunci rahasia TIDAK ditulis di sini (file ini ikut git & repo publik): lihat .dev.vars.contoh
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "chaatown-galeri",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-01",
+
+  // Saat di komputer, Worker ini juga menyajikan file website dari folder proyek,
+  // supaya halaman dan /api ada di alamat yang sama (http://localhost:8787),
+  // persis seperti nanti di chaatown.my.id. Daftar file yang tidak ikut: ../.assetsignore
+  "assets": { "directory": "../", "binding": "ASSETS", "run_worker_first": ["/api/*", "/img/*"] },
+
+  "d1_databases": [
+    { "binding": "DB", "database_name": "chaatown-galeri", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+  ],
+  "r2_buckets": [
+    { "binding": "FOTO", "bucket_name": "chaatown-galeri-foto" }
+  ],
+
+  "vars": {
+    "SITUS": "http://localhost:8787",            // alamat situs (dipakai untuk cek asal permintaan & alamat balik login)
+    "GUILD_ID": "1338010772860833814",            // server Discord ChaaTown
+    "MOD_ROLE_IDS": "",                           // ID role mod, pisahkan dengan koma (dipakai Fase G3)
+    "TURNSTILE_SITEKEY": "1x00000000000000000000AA", // kunci uji resmi Cloudflare (selalu lolos), diganti saat G6
+    "BATAS_UPLOAD_HARIAN": "5",
+    "BATAS_ANTREAN": "10",
+    "UKURAN_MAKS": "5242880"                      // 5 MB
+  }
+}

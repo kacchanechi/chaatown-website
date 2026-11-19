@@ -1,0 +1,9 @@
+# File yang TIDAK disajikan oleh dapur galeri saat dijalankan di komputer (npm run dev di _api).
+.git
+.gitignore
+.assetsignore
+_api
+_tools
+node_modules
+*.md
+CNAME

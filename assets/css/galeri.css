@@ -5,6 +5,7 @@
    ===================================================================== */
 
 body{font:400 17px/1.6 "DM Sans",system-ui,sans-serif;background:var(--bg)}
+[hidden]{display:none!important} /* elemen yang disembunyikan JS tetap tersembunyi walau punya aturan display sendiri */
 .page{min-height:100vh;display:flex;flex-direction:column}
 main{flex:1;width:100%}
 h1{font-size:clamp(34px,7vw,64px);margin-top:22px}
@@ -54,7 +55,43 @@ footer{padding:22px 0}
 .up h2{display:block;padding:0;font-size:22px;margin:0 0 12px;background:none;border:0;box-shadow:none} /* polos: sudah berada di dalam panel kaca */
 .up p{margin:0 0 14px;color:var(--muted)}
 .soon-b{display:inline-block;margin-right:6px;padding:1px 10px;border-radius:999px;font:700 12px "Silkscreen",monospace;color:#26305a;background:linear-gradient(180deg,var(--blue-a),var(--blue-b) 55%,var(--blue-c))}
-.btn{display:inline-block;font:700 17px "DM Sans",sans-serif;text-decoration:none;padding:12px 24px}
+.btn{display:inline-block;font:700 17px "DM Sans",sans-serif;text-decoration:none;padding:12px 24px;cursor:pointer}
+.btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.ract{display:flex;flex-wrap:wrap;gap:10px}
+.info{margin:0 0 14px;padding:10px 14px;border-radius:14px;border:1.5px solid var(--rim);background:var(--bg2);color:var(--ink)!important}
+.info.salah{border-color:#d0607a}
+
+/* ---------- Form upload (Fase G2) ---------- */
+.akun{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:0 0 16px;font-size:15px}
+.akun .av{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--rim)}
+.lnk{font:inherit;font-weight:700;color:var(--muted);background:none;border:0;padding:4px;text-decoration:underline;cursor:pointer}
+.lnk:hover{color:var(--ink)}
+#fu label{display:block;font-weight:700;margin:14px 0 6px}
+#fu label small{font-weight:400;color:var(--muted)}
+#fu input[type=text],#fu textarea{width:100%;font:inherit;color:var(--ink);padding:10px 14px;border-radius:14px;border:1.5px solid var(--rim);background:var(--bg)}
+#fu textarea{resize:vertical;min-height:64px}
+.drop{position:relative;display:grid!important;place-items:center;min-height:150px;margin:0!important;padding:14px;text-align:center;cursor:pointer;border:2px dashed var(--rim);border-radius:18px;background:var(--bg2);transition:border-color .15s}
+.drop:hover,.drop.seret,.drop:focus-within{border-color:var(--line)}
+.drop:focus-within{outline:3px solid var(--lamp);outline-offset:3px}
+.drop-t{font-weight:400}
+.drop-t b{display:block;font-size:18px}
+.drop-t small{display:block;color:var(--muted);font-size:14px;margin-top:4px}
+.drop img{max-width:100%;max-height:320px;border-radius:12px;display:block}
+.hit{margin:4px 0 0!important;text-align:right;font-size:13px}
+.ts{margin:12px 0 4px;min-height:0}
+.err{margin:8px 0!important;color:#b3304f!important;font-weight:700;min-height:1.2em}
+:root[data-theme="dark"] .err{color:#ffb3c4!important}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .err{color:#ffb3c4!important}}
+.kuota{margin:10px 0 0!important;font-size:14px}
+#mine{margin-top:26px}
+#mine h3{font-size:18px;margin-bottom:12px}
+.mine{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.mine li{display:grid;grid-template-columns:72px 1fr;gap:12px;align-items:center;padding:8px;border-radius:14px;border:1.5px solid var(--rim);background:var(--bg2)}
+.mine img{width:72px;height:48px;object-fit:cover;border-radius:8px;display:block}
+.mine b{display:block;font-size:15px;overflow-wrap:anywhere}
+.mine span{font-size:13px;color:var(--muted)}
+.mine .st{display:inline-block;margin-right:6px;padding:0 8px;border-radius:999px;font-weight:700;font-size:12px;color:#26305a}
+.st-menunggu{background:#fbe3a0}.st-tayang{background:#c9e8c0}.st-ditolak{background:#f6b8b0}
 
 /* ---------- Lightbox (foto diperbesar) ---------- */
 .lb{position:fixed;inset:0;z-index:50;background:rgba(20,26,60,.88);display:flex;align-items:center;justify-content:center;padding:20px;touch-action:pan-y}

@@ -1,0 +1,130 @@
+/* =====================================================================
+   foto.js - daftar foto, upload, dan penyajian gambar
+   ===================================================================== */
+import { json, galat, sekarang, asalSah, rapikanTeks } from './alat.js';
+import { periksaGambar, Tolak } from './berkas.js';
+import { sesiDari, devAktif } from './masuk.js';
+
+const NICK = /^[A-Za-z0-9_.* ]{3,24}$/; // nickname Minecraft (Java & Bedrock), 3-24 karakter
+const JENIS = { webp: 'image/webp', jpg: 'image/jpeg' };
+const angka = (v, cadangan) => { const n = parseInt(v, 10); return Number.isFinite(n) && n > 0 ? n : cadangan; };
+
+async function kuota(env, idPengguna) {
+  const r = await env.DB.prepare(
+    "SELECT SUM(dibuat > ?2) AS hariIni, SUM(status = 'menunggu') AS antrean FROM foto WHERE pengguna_id = ?1"
+  ).bind(idPengguna, sekarang() - 86400).first();
+  return {
+    hariIni: r.hariIni || 0, batasHarian: angka(env.BATAS_UPLOAD_HARIAN, 5),
+    antrean: r.antrean || 0, batasAntrean: angka(env.BATAS_ANTREAN, 10)
+  };
+}
+
+/** GET /api/saya -> status login + kuota upload */
+export async function saya(req, env, ctx, url) {
+  const umum = { turnstile: env.TURNSTILE_SITEKEY || null, ukuranMaks: angka(env.UKURAN_MAKS, 5242880), discordSiap: !!env.DISCORD_CLIENT_ID, loginUji: devAktif(env, url) };
+  const s = await sesiDari(req, env);
+  if (!s) return json({ masuk: false, ...umum });
+  return json({ masuk: true, ...umum, id: s.id, nama: s.nama, avatar: s.avatar, mod: s.mod, diblokir: s.diblokir, kuota: await kuota(env, s.id) });
+}
+
+/** GET /api/foto -> foto yang sudah disetujui mod (terbaru dulu) */
+export async function daftar(req, env, ctx, url) {
+  const sebelum = angka(url.searchParams.get('sebelum'), 2e9);
+  const { results } = await env.DB.prepare(
+    "SELECT f.id, f.jenis, f.nick, f.caption, f.lebar, f.tinggi, f.dibuat, p.nama, p.avatar, p.id AS pid " +
+    "FROM foto f JOIN pengguna p ON p.id = f.pengguna_id WHERE f.status = 'tayang' AND f.dibuat < ?1 ORDER BY f.dibuat DESC LIMIT 60"
+  ).bind(sebelum).all();
+  return json({
+    foto: results.map(r => ({
+      id: r.id, src: '/img/' + r.id + '.' + r.jenis, nick: r.nick, caption: r.caption, lebar: r.lebar, tinggi: r.tinggi, dibuat: r.dibuat,
+      pemilik: { id: r.pid, nama: r.nama, avatar: r.avatar }
+    }))
+  });
+}
+
+/** GET /api/foto/saya -> semua foto milik yang sedang login, termasuk yang menunggu/ditolak */
+export async function punyaSaya(req, env) {
+  const s = await sesiDari(req, env);
+  if (!s) return galat(401, 'Masuk dengan Discord dulu.');
+  const { results } = await env.DB.prepare(
+    'SELECT id, jenis, nick, caption, status, alasan, dibuat FROM foto WHERE pengguna_id = ?1 ORDER BY dibuat DESC LIMIT 50'
+  ).bind(s.id).all();
+  return json({ foto: results.map(r => ({ ...r, src: '/img/' + r.id + '.' + r.jenis })) });
+}
+
+async function cekTurnstile(token, req, env) {
+  if (!env.TURNSTILE_SECRET || !token || token.length > 2048) return false; // tanpa kunci rahasia: selalu tolak
+  try {
+    const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      body: new URLSearchParams({ secret: env.TURNSTILE_SECRET, response: token, remoteip: req.headers.get('CF-Connecting-IP') || '' })
+    });
+    return (await r.json()).success === true;
+  } catch { return false; }
+}
+
+/** POST /api/foto -> upload foto baru (masuk antrean, belum tayang) */
+export async function upload(req, env) {
+  // Urutan: pemeriksaan murah dulu, pemeriksaan berat (isi gambar) paling akhir
+  if (!asalSah(req, env)) return galat(403, 'Permintaan ditolak.');
+  const s = await sesiDari(req, env);
+  if (!s) return galat(401, 'Masuk dengan Discord dulu.');
+  if (s.diblokir) return galat(403, 'Akunmu tidak bisa upload ke galeri.');
+
+  const maks = angka(env.UKURAN_MAKS, 5242880);
+  const panjang = Number(req.headers.get('Content-Length') || 0);
+  if (!panjang) return galat(411, 'Ukuran kiriman tidak diketahui.');
+  if (panjang > maks + 65536) return galat(413, 'Foto terlalu besar (maksimal ' + Math.round(maks / 1048576) + ' MB).');
+  if (!(req.headers.get('Content-Type') || '').startsWith('multipart/form-data')) return galat(415, 'Format kiriman salah.');
+
+  let form;
+  try { form = await req.formData(); } catch { return galat(400, 'Kiriman rusak.'); }
+  const file = form.get('foto');
+  if (!(file instanceof File) || !file.size) return galat(400, 'Pilih foto dulu.');
+  if (file.size > maks) return galat(413, 'Foto terlalu besar (maksimal ' + Math.round(maks / 1048576) + ' MB).');
+  const nick = rapikanTeks(form.get('nick'), 40);
+  if (!NICK.test(nick)) return galat(400, 'Isi nickname Minecraft-mu (3 sampai 24 karakter: huruf, angka, _).');
+  const caption = rapikanTeks(form.get('caption'), 150);
+
+  if (!(await cekTurnstile(form.get('cf-turnstile-response'), req, env))) return galat(400, 'Verifikasi anti-bot gagal. Coba lagi.');
+
+  const k = await kuota(env, s.id);
+  if (k.hariIni >= k.batasHarian) return galat(429, 'Batas upload hari ini sudah habis (' + k.batasHarian + ' foto per 24 jam).');
+  if (k.antrean >= k.batasAntrean) return galat(429, 'Masih ada ' + k.antrean + ' fotomu yang menunggu dicek mod. Tunggu dulu ya.');
+
+  let g;
+  try { g = periksaGambar(new Uint8Array(await file.arrayBuffer())); }
+  catch (e) { if (e instanceof Tolak) return galat(400, e.message); throw e; }
+
+  const id = crypto.randomUUID();
+  await env.FOTO.put('foto/' + id + '.' + g.jenis, g.isi, { httpMetadata: { contentType: JENIS[g.jenis] } });
+  await env.DB.prepare(
+    "INSERT INTO foto (id, pengguna_id, nick, caption, jenis, status, lebar, tinggi, ukuran, dibuat) VALUES (?1, ?2, ?3, ?4, ?5, 'menunggu', ?6, ?7, ?8, ?9)"
+  ).bind(id, s.id, nick, caption, g.jenis, g.lebar, g.tinggi, g.isi.length, sekarang()).run();
+  return json({ id, status: 'menunggu' }, 201);
+}
+
+/** GET /img/<id>.<webp|jpg> -> file gambar. Yang belum tayang hanya untuk pemilik & mod. */
+export async function gambar(req, env, nama) {
+  const m = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.(webp|jpg)$/.exec(nama);
+  if (!m) return galat(404, 'Foto tidak ditemukan.');
+  const f = await env.DB.prepare('SELECT pengguna_id, status, jenis FROM foto WHERE id = ?1').bind(m[1]).first();
+  if (!f || f.jenis !== m[2]) return galat(404, 'Foto tidak ditemukan.');
+  const publik = f.status === 'tayang';
+  if (!publik) {
+    const s = await sesiDari(req, env);
+    if (!s || (s.id !== f.pengguna_id && !s.mod)) return galat(404, 'Foto tidak ditemukan.');
+  }
+  const obj = await env.FOTO.get('foto/' + nama);
+  if (!obj) return galat(404, 'Foto tidak ditemukan.');
+  return new Response(obj.body, {
+    headers: {
+      'Content-Type': JENIS[m[2]],
+      'X-Content-Type-Options': 'nosniff',                         // browser dilarang menebak jenis file
+      'Content-Security-Policy': "default-src 'none'; sandbox",   // kalaupun dibuka langsung, tidak ada yang bisa dijalankan
+      'Cross-Origin-Resource-Policy': 'same-origin',
+      'Content-Disposition': 'inline; filename="chaatown-' + m[1].slice(0, 8) + '.' + m[2] + '"',
+      'Cache-Control': publik ? 'public, max-age=3600' : 'private, no-store'
+    }
+  });
+}

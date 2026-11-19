@@ -16,9 +16,9 @@
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 
-# Kumpulkan semua file teks situs (kecuali _tools dan .git)
+# Kumpulkan semua file teks situs (kecuali _tools, .git, paket npm, dan data lokal wrangler)
 $files = Get-ChildItem -Path $root -Recurse -File -Include *.html,*.js,*.css,*.xml,*.txt,*.json |
-  Where-Object { $_.FullName -notmatch '\\(_tools|\.git)\\' }
+  Where-Object { $_.FullName -notmatch '\\(_tools|\.git|node_modules|\.wrangler)\\' }
 $all = ($files | ForEach-Object { Get-Content -Raw -Encoding UTF8 $_.FullName }) -join "`n"
 
 $fail = 0

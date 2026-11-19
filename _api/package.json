@@ -1,0 +1,14 @@
+{
+  "name": "chaatown-galeri-api",
+  "private": true,
+  "type": "module",
+  "description": "Dapur galeri ChaaTown (Cloudflare Worker): login Discord, upload foto, antrean mod.",
+  "scripts": {
+    "db": "wrangler d1 migrations apply DB --local",
+    "dev": "wrangler d1 migrations apply DB --local && wrangler dev --ip 127.0.0.1 --port 8787",
+    "uji": "node uji/uji-api.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
