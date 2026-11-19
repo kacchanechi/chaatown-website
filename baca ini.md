@@ -1,6 +1,6 @@
 # Baca Ini: Rekap Perombakan Website ChaaTown
 
-> Tanggal: 15 November 2026.
+> Dimulai: 15 November 2026. Diperbarui: 19 November 2026 (Babak 6 sampai 9: galeri baru).
 
 ---
 
@@ -21,6 +21,14 @@
 | **Backup .zip** | Salinan seluruh proyek yang dibungkus jadi satu file. |
 | **Aset terkunci** | Data penting yang **tidak boleh berubah sama sekali**: IP server, port, link Discord, link Saweria, sosial media, harga rank, dan Paw Coin. |
 | **Bot Discord** | "Akun robot" di Discord. Di proyek ini, bot hanya dipakai untuk **membaca** daftar channel. |
+| **Push (git)** | Mengirim titik simpan ke GitHub sebagai cadangan online. Push **tidak** mengubah website live. |
+| **Dapur galeri** | Program kecil di server (Cloudflare Worker) yang mengurus login, upload, suka, komentar, dan moderasi. Kodenya ada di folder `_api`. |
+| **Cloudflare Workers / R2 / D1** | Layanan Cloudflare: Workers = tempat dapur galeri jalan, R2 = gudang foto, D1 = database kecil. |
+| **Migrasi** | File berisi perintah "bangun/ubah tabel database" (`_api/migrations`). Dijalankan sekali, berurutan. |
+| **Login Discord (OAuth)** | Pengunjung masuk pakai akun Discord-nya. Website hanya diberi tahu nama, avatar, dan apakah dia member server ChaaTown. |
+| **Webhook** | "Kotak pos" di satu channel Discord. Dipakai dapur galeri untuk mengirim pemberitahuan ke channel mod. |
+| **Turnstile** | Pemeriksa anti-bot dari Cloudflare, biasanya tanpa perlu klik apa pun. |
+| **Rahasia / `.dev.vars`** | File berisi kunci rahasia (Client Secret Discord, webhook). **Tidak pernah** ikut git dan tidak boleh ditempel ke chat. |
 
 ---
 
@@ -139,31 +147,120 @@ Yang kemudian terjadi:
 
 ---
 
+## Babak 6 (19 November): Kacchan kembali, cek ulang, dan git disambung lagi
+
+**Kacchan kembali** dan meminta Assit mengecek semua file, karena banyak yang berubah sejak rekap ini terakhir ditulis.
+
+- **Folder proyek pindah** ke `C:\projects\chaatown-website-main` (pakai tanda strip). Folder lama `chaatown.website-main` (pakai titik) dan `chaatown-cadangan` dibiarkan sebagai cadangan.
+- **Assit menemukan perubahan konten tanggal 18 November** yang dikerjakan di luar sesi:
+  - Tab Top Up berisi daftar **Rank VIP** lengkap (Member gratis sampai Legend) dan form beli rank aktif lagi.
+  - Sub-tab baru **Claim Block** (masih "Segera hadir") dan guide **Fishing** (Fish Rework).
+  - Nama realm jadi **Frostbound** dan **Emberbound**; syarat rank toko peti diganti kalimat "sedang disesuaikan".
+  - Halaman **galeri dihapus**, dan **Request Rank dihapus** dari daftar rank. Satpam aset ikut disesuaikan. Kacchan memastikan ini disengaja.
+  - Jadi **sebagian isi Fase 6 sudah dikerjakan**. Sisanya tetap menunggu owner.
+- **Soal GitHub, ada fakta yang perlu diluruskan.** Babak 2 mencatat "proyek tidak dihubungkan ke GitHub". Ternyata folder lama sudah tersambung ke repo **`kacchanechi/chaatown-website`** (repo **publik**, sudah ada tag `v1-rombak`). Repo ini **bukan** sumber website live: chaatown.my.id masih diambil dari repo lain (kemungkinan milik owner), jadi push ke repo ini aman.
+- **Kacchan menyambung git sendiri**, dipandu Assit langkah demi langkah: `git init`, sambung ke GitHub, ambil riwayat lama, lalu commit perubahan 18 November.
+- **Catatan Windows:** PowerShell memblokir perintah `npm`. Solusinya cukup ketik **`npm.cmd`** (tanpa mengubah setelan Windows).
+
+## Babak 7: Rencana galeri baru dengan upload
+
+**Kacchan ingin galeri kembali, dan kali ini pemain bisa upload sendiri**, "seamless seperti sosial media", hanya gambar, dengan keamanan ketat.
+
+Assit menjelaskan bahwa GitHub Pages hanya bisa **menyajikan** file, tidak bisa **menerima** upload. Jadi galeri butuh "dapur" di Cloudflare (Workers + R2 + D1), yang muat di paket gratis. **XAMPP dan tunnel di PC ini tidak disentuh sama sekali**: tunnel hanya meneruskan ke `localhost:80`, sedangkan dapur galeri dites di port lain (8787).
+
+Keputusan Kacchan:
+
+| Pertanyaan | Keputusan |
+|---|---|
+| Siapa yang boleh upload? | **Member server Discord ChaaTown** (login Discord) |
+| Langsung tayang atau dicek dulu? | **Dicek mod dulu** (antrean) |
+| Fitur sosial | **Caption + nick, suka, komentar, profil pemain** |
+| Komentar | **Langsung tayang**, dengan filter kata kasar, batas kecepatan, dan tombol Laporkan |
+| Moderasi | **Pilihan A**: halaman mod di website + pemberitahuan lewat webhook. Bot lama tetap tanpa izin apa pun |
+| 12 foto galeri lama | **Dipakai lagi** sebagai isi awal |
+| Akun Cloudflare | **Belum tahu dipegang siapa**, perlu ditanyakan ke owner |
+
+Rencananya dipecah jadi fase G1 sampai G6. Seperti biasa: **satu fase, satu commit**, dan Kacchan sendiri yang melakukan commit.
+
+## Babak 8: Fase G1 sampai G5 (semua dikerjakan dan diuji di komputer ini)
+
+### G1: Halaman galeri baru
+- Halaman `/galeri/` dengan **feed foto, profil per pemain** (alamat `?pemain=Nama`, bisa dibagikan), dan **lightbox** (tombol panah, Esc, geser di HP).
+- 12 foto lama kembali, **pengalih `galeri.html` aktif lagi** supaya link lama tidak mati, dan satpam aset kembali mengecek 12 foto beserta pemiliknya.
+- Atas permintaan Kacchan, link **Galeri** ditambahkan ke menu semua halaman.
+
+### G2: Dapur galeri (login Discord, upload, antrean)
+- Kacchan menyiapkan login Discord di Developer Portal (Client ID, Client Secret, alamat redirect) dan menyimpannya di `_api/.dev.vars`. **Login Discord berhasil.**
+- Browser mengecilkan foto dan mengubahnya ke WebP/JPG. Dapur **membongkar ulang isi file**: metadata (lokasi GPS, info kamera), data tempelan, dan file palsu (SVG, HTML, PNG berkedok) dibuang atau ditolak.
+- Batas: 5 MB per foto, 5 upload per 24 jam, maks 10 foto menunggu. Ada pemeriksa anti-bot (Turnstile).
+- Foto yang belum disetujui **hanya bisa dilihat pemiliknya** (dan mod).
+
+### G3: Moderasi
+- Halaman **`/galeri/mod/`**, khusus akun dengan role mod (`1352265845291749407`). Sesi mod hanya 12 jam.
+- Mod bisa **Setujui, Tolak, Turunkan, Blokir**, dan melihat **Riwayat** semua tindakan mod. Foto yang ditolak langsung dihapus filenya.
+- **Webhook ke channel mod sudah dites Kacchan dan berhasil.** Isinya hanya jumlah antrean + link, paling sering 1x per 10 menit, dan tidak bisa me-mention siapa pun.
+
+### G4: Suka, komentar, laporan, profil
+- Tombol **♥ suka** dan **💬 komentar**. Komentar maks 300 karakter, tanpa link, dengan filter kata kasar (daftarnya di `_api/src/kata.js`, boleh diubah).
+- **Laporkan** foto/komentar. Komentar yang dilaporkan 3 akun otomatis disembunyikan sampai dicek mod. Halaman mod dapat tab **Laporan**.
+- **Nickname punya pemilik**: akun pertama yang memakai nick jadi pemiliknya (maks 3 nick per akun), supaya tidak ada yang menyamar. Nick pemilik foto lama **dipesan**, dan mod bisa melepasnya di tab **Nickname**.
+
+### G4b: 12 foto lama jadi post
+- 12 foto lama dicatat di database (migrasi `0004_arsip.sql`) dengan pemilik khusus **"Galeri lama"** (bukan akun Discord, tidak bisa login atau diblokir), sehingga **bisa disukai dan dikomentari** juga.
+- File fotonya **tidak dipindah** (tetap aset terkunci). Kalau mod menurunkan foto lama, foto hanya disembunyikan; file aslinya tetap ada.
+
+### G5: Audit keamanan & uji serang
+- Assit menyisir kode dan menutup **7 celah** (misalnya kiriman raksasa yang bisa membuat dapur kehabisan memori, nama Discord berisi karakter "pembalik teks", serbuan upload bersamaan, dan trik kata kasar dengan huruf tak terlihat atau huruf Kiril).
+- Halaman galeri dan mod diberi **CSP**: browser menolak script sisipan dan kiriman data ke situs lain. Sudah dibuktikan di browser.
+- Form upload diberi **pemberitahuan privasi**.
+- Seluruh riwayat git diperiksa: **tidak ada rahasia yang pernah ter-commit**.
+- Catatan lengkapnya ada di **`_api/KEAMANAN.md`**, termasuk **daftar cek wajib sebelum online (G6)**.
+
+**Hasil uji terakhir: 371 uji lolos semua** (tampilan, fungsi, keamanan, aksesibilitas di mode terang/gelap/HP). Semua uji Assit dijalankan di server uji terpisah (port 8788, database sementara, notifikasi mati), jadi database dan channel mod Kacchan tidak terganggu.
+
+## Babak 9: Profil Kacchan di halaman About
+
+- Kacchan meminta profilnya ditambahkan sebagai **kontribusi membangun website**, hanya di halaman About (Kacchan tidak main Minecraft).
+- Di bawah tombol-tombol About sekarang ada **pesan dari Kacchan** dan kartu profil: foto, **Kacchan**, **Web Developer**, dengan link ke profil Discord.
+- Foto dikecilkan dari 850 KB menjadi 11,8 KB (`assets/img/tim/kacchan.webp`).
+- Catatan: link profil Discord memang selalu memuat ID akun. ID itu bukan rahasia (tidak bisa dipakai login).
+
+---
+
 ## Kondisi sekarang
 
 | Hal | Status |
 |---|---|
-| Lokasi proyek | `C:\projects\chaatown.website-main` (hanya di komputer ini) |
+| Lokasi proyek | `C:\projects\chaatown-website-main` |
+| Git | Tersambung ke `kacchanechi/chaatown-website` (publik). Titik simpan terakhir: profil About. Beberapa commit **belum di-push**. |
 | Website live (chaatown.my.id) | **Masih versi lama** (5 Oktober 2026). Belum ada yang di-upload. |
-| Aset terkunci | **Aman.** Semua dicek setelah setiap perubahan. |
-| Backup | v0 (mentah) dan v1 (hasil rombak Fase 1–8) di `C:\xampp\backups\` |
-| Fase 9 & 10 | Sudah selesai dan tersimpan sebagai titik simpan, **tetapi belum masuk ke backup zip v1** |
+| Galeri baru (G1 sampai G5, G4b) | **Selesai dan teruji, tetapi baru jalan di komputer ini.** Online-nya menunggu G6. |
+| Aset terkunci | **Aman.** Dicek satpam aset setelah setiap perubahan (sekarang termasuk 12 foto galeri). |
+| Keamanan | Audit G5 selesai. Lihat `_api/KEAMANAN.md`. |
+| Backup | v0 (mentah) dan v1 (Fase 1–8) di `C:\xampp\backups\`. Zip `C:\projects\chaatown-website-main.zip` (19 Nov, sebelum galeri baru). |
 
 ### Yang masih menunggu keputusan
-1. **Owner**: menjawab 7 pertanyaan Fase 6 (isi konten Season 2).
-2. **Kacchan**: kapan dan bagaimana website di-upload (deploy). Petunjuknya ada di catatan backup v1.
-3. **Kacchan/owner**: apakah `www.chaatown.my.id` mau diperbaiki dan apakah `http` mau dipaksa pindah ke `https`. Keduanya diatur di Cloudflare.
+1. **Owner: akun Cloudflare (untuk G6).** Akun yang memegang domain chaatown.my.id milik siapa? Bisakah Kacchan diberi akses? Apakah owner setuju mendaftarkan metode pembayaran untuk R2 (pemakaiannya tetap gratis)?
+2. **Kacchan: push ke GitHub** sebagai cadangan online (`git push -u origin main`).
+3. **Owner**: sisa pertanyaan Fase 6 (isi konten Season 2) yang belum terjawab.
+4. **Kacchan/owner**: apakah `www.chaatown.my.id` mau diperbaiki dan apakah `http` mau dipaksa pindah ke `https`. Keduanya diatur di Cloudflare.
+5. **Kacchan (opsional, sebelum G6)**: menyembunyikan ID Discord pengguna dari data galeri (avatar tetap tampil).
+
+### Fase berikutnya: G6, galeri online
+Begitu akses Cloudflare ada: database & gudang foto dibuat di Cloudflare, kunci rahasia dimasukkan sebagai "secret", Turnstile memakai kunci asli, alamat login Discord ditambah alamat asli, lalu daftar cek di `_api/KEAMANAN.md` dicentang satu per satu. **Catatan DNS milik tunnel tidak akan diubah.**
 
 ---
 
 ## Tugas mandiri untuk Kacchan
+
+### A. Merawat daftar channel Discord
 
 Supaya Kacchan bisa merawat daftar channel Discord **sendiri** tanpa menunggu Assit, Kacchan coba jalankan skrip sinkron dalam **mode coba-coba**. Mode ini **hanya membaca dan tidak mengubah apa pun**, jadi aman.
 
 1. Kacchan membuka **VS Code**, lalu membuka terminal dengan menekan **Ctrl + `** (tombol di bawah Esc).
 2. Kacchan mengetik perintah ini lalu menekan Enter, untuk masuk ke folder proyek:
    ```
-   cd C:\projects\chaatown.website-main
+   cd C:\projects\chaatown-website-main
    ```
 3. Kacchan mengetik perintah ini lalu menekan Enter:
    ```
@@ -175,6 +272,44 @@ Supaya Kacchan bisa merawat daftar channel Discord **sendiri** tanpa menunggu As
 5. Kacchan memberi tahu Assit hasilnya: **sama**, ada tulisan **"BARU"** (artinya ada channel baru di Discord), atau muncul **error**.
 
 Kalau suatu hari ada channel baru di Discord, Kacchan cukup menambahkan deskripsinya di file `_tools/discord-channels.json`. Setelah itu, Kacchan menjalankan perintah yang sama **tanpa** `--coba`, dan daftar di website langsung diperbarui.
+
+### B. Menjalankan galeri di komputer sendiri
+
+Live Server (port 5500) hanya menampilkan galeri tanpa upload. Untuk mencoba galeri lengkap (login, upload, suka, komentar, halaman mod):
+
+1. Di terminal VS Code, masuk ke folder dapur galeri:
+   ```
+   cd C:\projects\chaatown-website-main\_api
+   ```
+2. Nyalakan dapurnya:
+   ```
+   npm.cmd run dev
+   ```
+   Kalau ditanya soal migrasi database, ketik **Y**. Tunggu sampai muncul `Ready on http://localhost:8787`.
+3. Buka **http://localhost:8787/galeri/** di browser. Halaman mod ada di **http://localhost:8787/galeri/mod/**.
+4. Untuk berhenti, tekan **Ctrl + C** di terminal.
+
+### C. Menjalankan uji otomatis (sebelum perubahan besar / sebelum online)
+
+Sambil dapur menyala, buka terminal **kedua**, masuk ke folder `_api`, lalu:
+```
+npm.cmd run uji
+npm.cmd run serang
+```
+Hasil yang diharapkan: semua `PASS`, tidak ada `FAIL`. Uji ini membuat akun & foto uji di database lokal, dan bisa memicu satu pemberitahuan uji ke channel mod.
+
+### D. Mengubah daftar kata kasar
+
+Daftar kata yang ditolak di komentar ada di `_api/src/kata.js` (bagian `KATA`). Tambahkan atau hapus kata (huruf kecil, satu kata per isian), simpan, lalu jalankan `npm.cmd run uji` untuk memastikan tidak ada yang rusak.
+
+### E. Aturan yang selalu berlaku
+
+- **Jangan pernah** menempel isi `_api/.dev.vars` ke chat, Discord, atau commit. Repo GitHub-nya **publik**.
+- **XAMPP, tunnel (`cloudflared`), dan folder `.cloudflared` tidak disentuh.**
+- Jalankan satpam aset setelah mengubah apa pun:
+  ```
+  powershell -ExecutionPolicy Bypass -File _tools\cek-aset.ps1
+  ```
 
 
 Best Regard
