@@ -2,7 +2,7 @@
 # Cek Aset Terkunci - ChaaTown Website
 # ---------------------------------------------------------------------
 # Memastikan aset penting (IP, port, link Discord/Saweria, sosial media,
-# data rank, Paw Coin, format pesan beli, validasi nickname, CNAME)
+# data rank, Paw Coin, format pesan beli, validasi nickname, galeri, CNAME)
 # TIDAK berubah setelah perombakan.
 #
 # Cara pakai (dari folder proyek):
@@ -65,6 +65,19 @@ Cek "Format 'Beli rank <nama> | Nickname: <nick>'" ((Ada "'Beli rank '") -and (A
 Cek "Format 'Beli <paket> (<jml> Paw Coins) | Nickname: <nick>'" (Ada "' Paw Coins) | Nickname: '")
 Cek "Validasi nickname 3-24 karakter"      (Pola '\.length\s*<\s*3\s*\|\|\s*\w+\.length\s*>\s*24')
 Cek "Pesan error nickname"                 (Ada 'Isi nickname Minecraft-mu (3 sampai 24 karakter).')
+
+Write-Host "`n== Galeri (file + pemilik foto)"
+$galeri = @(
+  @('senja-bangunan-jepang.webp','AyamKekar'), @('lodge-salju.webp','Gikx'), @('foto-bareng-malam.webp','AyamKekar'),
+  @('balkon-bareng.webp','Foksunee'), @('kumpul-salju.webp','BlaZeSZ'), @('singgasana.webp','Veneznia'),
+  @('santai-teras.webp','BlaZeSZ'), @('tavern-malam.webp','BlaZeSZ'), @('senjata-merah.webp','Gikx'),
+  @('pertarungan-gua.webp','BlaZeSZ & Foksunee'), @('malam-hujan-portal.webp','Gikx'), @('patung-batu.webp','Veneznia')
+)
+foreach ($g in $galeri) {
+  $okFile = Test-Path ("$root\galeri\" + $g[0])
+  $okData = Pola ("galeri/" + [regex]::Escape($g[0]) + "['""]\s*,\s*player\s*:\s*['""]" + [regex]::Escape($g[1]) + "['""]")
+  Cek ("{0} oleh {1}" -f $g[0], $g[1]) ($okFile -and $okData) $(if (-not $okFile) { 'file foto hilang' } else { 'data di galeri berubah' })
+}
 
 Write-Host ""
 if ($fail -eq 0) { Write-Host "SEMUA ASET AMAN ($($files.Count) file dicek)." -ForegroundColor Green; exit 0 }

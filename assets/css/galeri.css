@@ -1,0 +1,75 @@
+/* =====================================================================
+   ChaaTown - galeri.css (khusus galeri/index.html)
+   Dimuat setelah base.css dan SEBELUM glass.css.
+   Warna kaca (--glass, --glass-hi, --rim, --soft, --gloss) berasal dari glass.css.
+   ===================================================================== */
+
+body{font:400 17px/1.6 "DM Sans",system-ui,sans-serif;background:var(--bg)}
+.page{min-height:100vh;display:flex;flex-direction:column}
+main{flex:1;width:100%}
+h1{font-size:clamp(34px,7vw,64px);margin-top:22px}
+.lead{color:var(--muted);max-width:56ch;margin:14px 0 26px}
+footer{padding:22px 0}
+
+/* ---------- Daftar pemain (filter / pintu ke profil) ---------- */
+.pl{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 28px;padding:0;list-style:none}
+.pl a{display:inline-flex;align-items:center;gap:8px;min-height:36px;text-decoration:none;font-weight:700;font-size:15px;padding:4px 14px 4px 4px;border-radius:999px;border:1.5px solid var(--rim);background:linear-gradient(170deg,var(--glass-hi),var(--glass));box-shadow:var(--gloss);transition:transform .15s}
+.pl a.all{padding-left:14px}
+.pl a:hover{border-color:var(--line);transform:translateY(-1px)}
+.pl a[aria-current="page"]{background:linear-gradient(180deg,var(--blue-a),var(--blue-b) 55%,var(--blue-c));color:#26305a}
+.pl small{font-weight:500;font-size:13px;opacity:.85}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Avatar huruf depan (sementara; nanti diganti avatar Discord) */
+.pa{flex:none;width:28px;height:28px;border-radius:50%;display:inline-grid;place-items:center;font:700 13px "Silkscreen",monospace;color:#26305a;background:var(--tone,#b9cdf0);border:1.5px solid rgba(255,255,255,.75)}
+
+/* ---------- Profil pemain ---------- */
+.prof{margin:0 0 26px}
+.back{display:inline-block;margin-bottom:14px;font-weight:700;text-decoration:none;color:var(--muted)}
+.back:hover{color:var(--ink);text-decoration:underline}
+.ph{display:flex;align-items:center;gap:16px}
+.ph .pa{width:64px;height:64px;font-size:26px;box-shadow:var(--soft)}
+.ph h2{margin:0;overflow-wrap:anywhere}
+.ph p{margin:6px 0 0;color:var(--muted)}
+
+/* ---------- Grid foto ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:24px}
+.gc{margin:0;overflow:hidden;border-radius:22px;border:1.5px solid var(--rim);background:linear-gradient(165deg,var(--glass-hi),var(--glass));box-shadow:var(--soft),var(--gloss);transition:transform .15s}
+.gc:hover{transform:translateY(-3px)}
+.gb{display:block;width:100%;aspect-ratio:16/10;padding:0;border:0;border-bottom:1.5px solid var(--rim);overflow:hidden;cursor:zoom-in;background:var(--bg2)}
+.gb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s}
+.gb:hover img{transform:scale(1.04)}
+.gb:focus-visible{outline-offset:-4px}
+.gt{padding:12px 16px 14px}
+.gt b{display:block;font-size:16px;overflow-wrap:anywhere}
+.gt span{color:var(--muted);font-size:14px}
+.gt a,.lb figcaption a{color:inherit;font-weight:700}
+.gt a:hover{color:var(--ink)}
+.miss{display:grid;place-items:center;width:100%;height:100%;min-height:120px;color:var(--muted);font-size:15px;background:var(--bg2)}
+.empty{border:1.5px dashed var(--rim);border-radius:22px;padding:34px 24px;text-align:center;max-width:560px;color:var(--muted)}
+.empty b{display:block;font-family:"Silkscreen",monospace;font-size:20px;color:var(--ink);margin-bottom:6px}
+
+/* ---------- Ajakan upload ---------- */
+.up{margin:56px 0 64px;max-width:640px;padding:22px 24px 26px;border-radius:var(--wob);border:1.5px solid var(--rim);background:linear-gradient(165deg,var(--glass-hi),var(--glass));box-shadow:var(--soft),var(--gloss)}
+.up h2{display:block;padding:0;font-size:22px;margin:0 0 12px;background:none;border:0;box-shadow:none} /* polos: sudah berada di dalam panel kaca */
+.up p{margin:0 0 14px;color:var(--muted)}
+.soon-b{display:inline-block;margin-right:6px;padding:1px 10px;border-radius:999px;font:700 12px "Silkscreen",monospace;color:#26305a;background:linear-gradient(180deg,var(--blue-a),var(--blue-b) 55%,var(--blue-c))}
+.btn{display:inline-block;font:700 17px "DM Sans",sans-serif;text-decoration:none;padding:12px 24px}
+
+/* ---------- Lightbox (foto diperbesar) ---------- */
+.lb{position:fixed;inset:0;z-index:50;background:rgba(20,26,60,.88);display:flex;align-items:center;justify-content:center;padding:20px;touch-action:pan-y}
+.lb[hidden]{display:none}
+.lb figure{margin:0;max-width:min(88vw,1100px);text-align:center}
+.lbm img,.lbm .miss{max-width:100%;max-height:74vh;display:block;margin:0 auto;border-radius:16px;border:2px solid rgba(255,255,255,.8);background:var(--bg2)}
+.lbm .miss{width:min(80vw,520px);aspect-ratio:16/10}
+.lb figcaption{color:#fff;margin-top:12px;font-size:16px}
+.lb figcaption b{display:block}
+.lb figcaption span{opacity:.9;font-size:15px}
+.lbi{margin:4px 0 0;color:rgba(255,255,255,.75);font-size:13px}
+.lbx,.lbn{position:absolute;display:grid;place-items:center;font:700 28px/1 "DM Sans",sans-serif;width:46px;height:46px;border-radius:50%;cursor:pointer;color:var(--ink);border:1.5px solid var(--rim);background:linear-gradient(170deg,var(--glass-hi),var(--glass));background-color:var(--card);box-shadow:var(--soft),var(--gloss)}
+.lbx{top:calc(14px + env(safe-area-inset-top,0px));right:14px}
+.lbn{top:50%;transform:translateY(-50%)}
+.lbn[hidden]{display:none}
+.lbp{left:10px}.lbnx{right:10px}
+.lbx:hover,.lbn:hover{background:linear-gradient(180deg,var(--pink-a),var(--pink-b) 50%,var(--pink-c));color:#26305a}
+@media(max-width:560px){.lbn{top:auto;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:none}}
