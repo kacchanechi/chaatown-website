@@ -21,7 +21,6 @@
 .mk-m dt{color:var(--muted)}
 .mk-m dd{margin:0;overflow-wrap:anywhere}
 .mk .ract .btn{font-size:15px;padding:9px 18px}
-.btn.merah{background:linear-gradient(180deg,#ffe3df,#f6b8b0 55%,#ec9a90);border-color:#e9998f;color:#26305a}
 .mk-f{margin-top:12px;padding:12px 14px;border-radius:14px;border:1.5px solid var(--rim);background:var(--bg2)}
 .mk-f label{display:block;font-weight:700;font-size:14px;margin:0 0 6px}
 .mk-f select,.mk-f input{display:block;width:100%;font:inherit;color:var(--ink);padding:8px 12px;margin:0 0 10px;border-radius:12px;border:1.5px solid var(--rim);background:var(--bg)}
@@ -35,3 +34,9 @@
 .ul small{display:block;color:var(--muted);font-size:13px}
 .rw-a{display:inline-block;padding:0 8px;margin-right:4px;border-radius:999px;font-size:12px;font-weight:700;color:#26305a;background:#d4c8f3}
 .rw-a.setujui{background:#c9e8c0}.rw-a.tolak,.rw-a.turunkan{background:#f6b8b0}.rw-a.blokir{background:#f3cdb8}.rw-a.buka-blokir{background:#b9cdf0}
+
+/* ---------- Laporan & nickname (Fase G4) ---------- */
+.mk h2 .rw-a{vertical-align:2px}
+.kutip{margin:0 0 12px;padding:10px 14px;border-left:4px solid var(--rim);border-radius:0 12px 12px 0;background:var(--bg2);font-size:15px;overflow-wrap:anywhere}
+.ul .tanya{flex-basis:100%;font-size:14px}
+.rw-a.sembunyikan-komentar{background:#f6b8b0}.rw-a.abaikan-laporan{background:#d4c8f3}.rw-a.lepas-nick{background:#fbe3a0}

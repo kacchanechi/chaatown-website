@@ -44,6 +44,28 @@ export function asalSah(req, env) {
   return !!asal && asal === new URL(env.SITUS).origin;
 }
 
+/** Baca kiriman JSON kecil (maks 4 KB). Hasil: objek, atau null kalau bukan JSON / rusak / kebesaran. */
+export async function bacaJson(req) {
+  if (!(req.headers.get('Content-Type') || '').startsWith('application/json')) return null;
+  const t = await req.text();
+  if (t.length > 4096) return null;
+  try { const j = JSON.parse(t); return j && typeof j === 'object' && !Array.isArray(j) ? j : null; } catch { return null; }
+}
+
+/**
+ * Batas kecepatan: true kalau masih boleh (maks kali dalam jendela "detik").
+ * Contoh: cekBatas(env, 'komen:' + idAkun, 5, 60) -> maksimal 5 komentar per menit.
+ */
+export async function cekBatas(env, kunci, maks, detik) {
+  const t = sekarang();
+  const r = await env.DB.prepare(
+    'INSERT INTO batas (kunci, mulai, jumlah) VALUES (?1, ?2, 1) ON CONFLICT(kunci) DO UPDATE SET ' +
+    'jumlah = CASE WHEN batas.mulai <= ?2 - ?3 THEN 1 ELSE batas.jumlah + 1 END, ' +
+    'mulai = CASE WHEN batas.mulai <= ?2 - ?3 THEN ?2 ELSE batas.mulai END RETURNING jumlah'
+  ).bind(kunci, t, detik).first();
+  return r.jumlah <= maks;
+}
+
 /** Rapikan teks bebas: buang karakter kontrol & tak terlihat, satukan spasi, potong panjangnya. */
 export function rapikanTeks(s, maks) {
   return String(s || '').normalize('NFC')

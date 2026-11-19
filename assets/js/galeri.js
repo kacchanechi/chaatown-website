@@ -42,7 +42,9 @@
       return { src: ROOT + p.file, players: p.player.split(/\s*&\s*/), caption: p.caption || '' };
     });
     return cekDapur().then(function () { return ambil('/api/foto'); }).then(function (d) {
-      return (d.foto || []).map(function (f) { return { src: f.src, players: [f.nick], caption: f.caption || '' }; }).concat(arsip);
+      return (d.foto || []).map(function (f) {
+        return { id: f.id, src: f.src, players: [f.nick], caption: f.caption || '', suka: f.suka || 0, komentar: f.komentar || 0, disukai: !!f.disukai, pemilik: f.pemilik };
+      }).concat(arsip);
     }, function () { return arsip; });
   }
 
@@ -50,8 +52,10 @@
   function ambil(u, opsi) {
     opsi = opsi || {};
     var ctl = window.AbortController ? new AbortController() : null;
+    var h = { Accept: 'application/json' };
+    if (opsi.json) { opsi.method = 'POST'; opsi.body = JSON.stringify(opsi.json); h['Content-Type'] = 'application/json'; }
     var t = ctl && setTimeout(function () { ctl.abort(); }, opsi.method === 'POST' ? 90000 : 8000);
-    return fetch(u, { method: opsi.method || 'GET', body: opsi.body, credentials: 'same-origin', headers: { Accept: 'application/json' }, signal: ctl && ctl.signal })
+    return fetch(u, { method: opsi.method || 'GET', body: opsi.body, credentials: 'same-origin', headers: h, signal: ctl && ctl.signal })
       .then(function (r) {
         clearTimeout(t);
         if ((r.headers.get('Content-Type') || '').indexOf('application/json') < 0) throw new Error('Dapur galeri belum aktif.');
@@ -126,12 +130,8 @@
     [].forEach.call(pl.querySelectorAll('a'), function (a) {
       if (a.dataset.name === (name || '')) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
-    prof.hidden = !name;
-    if (name) {
-      avatar(name, $('pa'));
-      $('pn').textContent = name;
-      $('pc').textContent = shownFor(name).length + ' foto di galeri';
-    }
+    prof.hidden = !name; profil = name;
+    if (name) { $('pn').textContent = name; isiProfil(); }
     shown = name ? shownFor(name) : all.slice();
     document.title = name ? 'Foto ' + name + ' - ' + TITLE : TITLE;
 
@@ -142,11 +142,29 @@
       b.addEventListener('click', function () { openLb(i); });
       t.appendChild(el('b', null, p.caption || 'Foto pemain'));
       t.appendChild(byline(p.players));
+      if (p.id) t.appendChild(barisSosial(p, i));
       card.appendChild(b); card.appendChild(t); grid.appendChild(card);
     });
     empty.hidden = shown.length > 0;
   }
   function shownFor(n) { return all.filter(function (p) { return p.players.indexOf(n) > -1; }); }
+
+  // Profil pemain: avatar Discord (kalau fotonya hasil upload), jumlah foto & total suka
+  var profil = null;
+  function isiProfil() {
+    if (!profil) return;
+    var fotonya = shownFor(profil), suka = 0, pemilik = null;
+    fotonya.forEach(function (p) { suka += p.suka || 0; if (!pemilik && p.pemilik) pemilik = p.pemilik; });
+    $('pc').textContent = fotonya.length + ' foto di galeri' + (suka ? ' · ' + suka + ' suka' : '');
+    var img = $('pa-img'), url = avatarUrl(pemilik);
+    if (url) img.src = url; else avatar(profil, $('pa'));
+    img.hidden = !url; $('pa').hidden = !!url;
+    $('pd').textContent = pemilik ? 'Akun Discord: ' + pemilik.nama : '';
+    $('pd').hidden = !pemilik;
+  }
+  function avatarUrl(o) {
+    return o && /^\d{5,20}$/.test(o.id) && /^(a_)?[0-9a-f]{32}$/.test(o.avatar || '') ? 'https://cdn.discordapp.com/avatars/' + o.id + '/' + o.avatar + '.png?size=64' : null;
+  }
 
   // Pindah tampilan + ubah alamat (bisa dibagikan, tombol Back tetap jalan)
   function go(name, focus) {
@@ -170,11 +188,16 @@
     lbi.textContent = n > 1 ? (cur + 1) + ' / ' + n : '';
     lbp.hidden = lbnx.hidden = n < 2;
     [cur + 1, cur - 1].forEach(function (k) { new Image().src = shown[(k + n) % n].src; }); // siapkan foto tetangga
+    tampilSosial(p);
   }
-  function openLb(i) { last = document.activeElement; show(i); lb.hidden = false; page.inert = true; document.body.style.overflow = 'hidden'; $('lbx').focus(); }
+  // keKomentar: langsung arahkan ke kolom komentar (dari tombol 💬 di kartu)
+  function openLb(i, keKomentar) {
+    last = document.activeElement; show(i); lb.hidden = false; page.inert = true; document.body.style.overflow = 'hidden';
+    if (keKomentar && shown[cur].id) ($('lb-kf').hidden ? $('lb-kh') : $('lb-kt')).focus(); else $('lbx').focus();
+  }
   function closeLb() {
     if (lb.hidden) return;
-    lb.hidden = true; page.inert = false; document.body.style.overflow = '';
+    lb.hidden = true; page.inert = false; document.body.style.overflow = ''; lbFoto = null;
     if (last && document.contains(last)) last.focus();
   }
   $('lbx').addEventListener('click', closeLb);
@@ -183,18 +206,20 @@
   lb.addEventListener('click', function (e) { if (e.target === lb) closeLb(); });
   document.addEventListener('keydown', function (e) {
     if (lb.hidden) return;
-    if (e.key === 'Escape') closeLb();
-    else if (e.key === 'ArrowLeft' && shown.length > 1) show(cur - 1);
-    else if (e.key === 'ArrowRight' && shown.length > 1) show(cur + 1);
-    else if (e.key === 'Tab') { // kunci fokus di dalam lightbox
-      var f = [].filter.call(lb.querySelectorAll('button,a[href]'), function (x) { return !x.hidden; });
+    var ketik = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName); // sedang mengetik komentar/laporan: panah & Esc jangan ganti foto
+    if (e.key === 'Tab') { // kunci fokus di dalam lightbox
+      var f = [].filter.call(lb.querySelectorAll('button,a[href],textarea,select,input'), function (x) { return !x.closest('[hidden]') && !x.disabled; });
       var k = f.indexOf(document.activeElement);
       e.preventDefault(); f[(k + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
     }
+    else if (ketik) return;
+    else if (e.key === 'Escape') closeLb();
+    else if (e.key === 'ArrowLeft' && shown.length > 1) show(cur - 1);
+    else if (e.key === 'ArrowRight' && shown.length > 1) show(cur + 1);
   });
-  // Geser (swipe) di HP: kiri = berikutnya, kanan = sebelumnya
+  // Geser (swipe) di HP: kiri = berikutnya, kanan = sebelumnya (tidak berlaku di panel komentar)
   var sx = null;
-  lb.addEventListener('touchstart', function (e) { sx = e.touches.length === 1 ? e.touches[0].clientX : null; }, { passive: true });
+  lb.addEventListener('touchstart', function (e) { sx = e.touches.length === 1 && !e.target.closest('.lbs') ? e.touches[0].clientX : null; }, { passive: true });
   lb.addEventListener('touchend', function (e) {
     if (sx === null || shown.length < 2) return;
     var dx = e.changedTouches[0].clientX - sx; sx = null;
@@ -240,7 +265,16 @@
     else avatar(akun.nama, $('up-pa'));
     av.hidden = !pakai; $('up-pa').hidden = pakai;
     var lm = $('up-mod'); lm.hidden = !akun.mod;
-    if (akun.mod) lm.textContent = 'Halaman mod' + (akun.antreanMod ? ' (' + akun.antreanMod + ' menunggu)' : '');
+    if (akun.mod) {
+      var ket = [];
+      if (akun.antreanMod) ket.push(akun.antreanMod + ' menunggu');
+      if (akun.laporanMod) ket.push(akun.laporanMod + ' laporan');
+      lm.textContent = 'Halaman mod' + (ket.length ? ' (' + ket.join(', ') + ')' : '');
+    }
+    // Saran nickname: nick yang sudah jadi milik akun ini
+    var dl = $('fu-nicks'); dl.textContent = '';
+    (akun.nick || []).forEach(function (n) { var o = el('option'); o.value = n; dl.appendChild(o); });
+    if (!$('fu-nick').value && akun.nick && akun.nick.length) $('fu-nick').value = akun.nick[0];
     if (!$('fu-nick').value) { try { $('fu-nick').value = localStorage.getItem('chaatown-nick') || ''; } catch (e) {} }
     tampilKuota(); muatPunyaku(); siapkanTurnstile();
   }
@@ -374,6 +408,186 @@
     ambil('/api/auth/keluar', { method: 'POST' }).then(function () {
       akun.masuk = false; info('Kamu sudah keluar.'); tampilAkun();
     }, function (x) { info(x.message, true); });
+  });
+
+  // ---------- Suka, komentar, laporan (Fase G4) ----------
+  var ALASAN_LAPOR = ['Konten tidak pantas', 'Spam atau iklan', 'Pelecehan atau ujaran kebencian', 'Bukan foto ChaaTown atau bukan miliknya', 'Lainnya'];
+  var K0 = 'Belum ada komentar. Jadi yang pertama, yuk!';
+  var lbFoto = null, nomorForm = 0, tTimer = null;
+  var masuk = function () { return !!(akun && akun.masuk); };
+
+  function toast(teks) {
+    var t = $('toast'); t.textContent = teks; t.classList.add('on');
+    clearTimeout(tTimer); tTimer = setTimeout(function () { t.classList.remove('on'); }, 3200);
+  }
+  function relatif(t) {
+    var d = Math.max(0, Math.floor(Date.now() / 1000) - t);
+    if (d < 60) return 'baru saja';
+    if (d < 3600) return Math.floor(d / 60) + ' menit lalu';
+    if (d < 86400) return Math.floor(d / 3600) + ' jam lalu';
+    if (d < 86400 * 30) return Math.floor(d / 86400) + ' hari lalu';
+    return new Date(t * 1000).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  function tombolLink(teks, fn) { var b = el('button', 'lnk', teks); b.type = 'button'; b.addEventListener('click', fn); return b; }
+
+  // Tombol ♥ (dipakai di kartu dan lightbox). Ditandai data-id supaya semua salinannya ikut diperbarui.
+  function isiSuka(b, p) {
+    b.dataset.id = p.id; b.setAttribute('aria-pressed', p.disukai ? 'true' : 'false'); b.textContent = '';
+    var h = el('span', 'hati', p.disukai ? '♥' : '♡'); h.setAttribute('aria-hidden', 'true');
+    b.appendChild(h); b.appendChild(document.createTextNode(' ' + p.suka)); b.appendChild(el('span', 'sr', ' suka'));
+    b.title = p.disukai ? 'Batal suka' : 'Suka foto ini';
+  }
+  function isiKom(b, p) {
+    b.textContent = ''; var h = el('span', null, '💬'); h.setAttribute('aria-hidden', 'true');
+    b.appendChild(h); b.appendChild(document.createTextNode(' ' + p.komentar)); b.appendChild(el('span', 'sr', ' komentar'));
+  }
+  function segarkan(p) {
+    [].forEach.call(document.querySelectorAll('.suka[data-id="' + p.id + '"]'), function (b) { isiSuka(b, p); });
+    [].forEach.call(document.querySelectorAll('.kom-n[data-id="' + p.id + '"]'), function (b) { isiKom(b, p); });
+    isiProfil();
+  }
+  function barisSosial(p, i) {
+    var d = el('div', 'sos'), s = el('button', 'suka'), k = el('button', 'kom-n');
+    s.type = k.type = 'button'; k.dataset.id = p.id;
+    isiSuka(s, p); isiKom(k, p);
+    s.addEventListener('click', function () { klikSuka(p); });
+    k.addEventListener('click', function () { openLb(shown.indexOf(p), true); });
+    d.appendChild(s); d.appendChild(k);
+    return d;
+  }
+
+  function klikSuka(p) {
+    if (!masuk()) { toast(akun ? 'Masuk dengan Discord dulu untuk menyukai foto.' : 'Fitur suka belum aktif.'); return; }
+    if (p.sibuk) return;
+    var mau = !p.disukai; p.sibuk = true; p.disukai = mau; p.suka += mau ? 1 : -1; segarkan(p); // langsung terlihat, dibatalkan kalau gagal
+    ambil('/api/foto/suka', { json: { id: p.id, suka: mau } }).then(function (r) { p.suka = r.suka; p.disukai = r.disukai; }, function (e) {
+      p.disukai = !mau; p.suka += mau ? -1 : 1; toast(e.message);
+      if (e.status === 401) { akun.masuk = false; tampilAkun(); }
+    }).then(function () { p.sibuk = false; segarkan(p); });
+  }
+  $('lb-suka').addEventListener('click', function () { if (lbFoto) klikSuka(lbFoto); });
+
+  // Panel samping lightbox
+  function tampilSosial(p) {
+    var ada = !!p.id;
+    $('lbs').hidden = !ada; lb.classList.toggle('dgn-sos', ada);
+    lbFoto = ada ? p : null;
+    if (!ada) return;
+    isiSuka($('lb-suka'), p);
+    $('lb-lf').hidden = true; $('lb-lf').textContent = '';
+    $('lb-lapor').hidden = !masuk();
+    $('lb-kf').hidden = !masuk(); $('lb-km').hidden = masuk();
+    $('lb-ke').textContent = '';
+    muatKomentar(p);
+  }
+  function muatKomentar(p) {
+    var l = $('lb-kl'), k0 = $('lb-k0');
+    l.textContent = ''; k0.hidden = true; l.setAttribute('aria-busy', 'true');
+    ambil('/api/foto/komentar?id=' + p.id).then(function (d) {
+      if (lbFoto !== p) return;
+      l.removeAttribute('aria-busy');
+      d.komentar.forEach(function (k) { l.appendChild(itemKomentar(k, p, d.mod)); });
+      k0.textContent = K0; k0.hidden = d.komentar.length > 0;
+      if (p.komentar !== d.komentar.length) { p.komentar = d.komentar.length; segarkan(p); }
+    }, function (e) {
+      if (lbFoto !== p) return;
+      l.removeAttribute('aria-busy'); k0.textContent = e.message; k0.hidden = false;
+    });
+  }
+  function kurangiKomentar(p, li) {
+    li.remove(); p.komentar = Math.max(0, p.komentar - 1); segarkan(p);
+    if (!$('lb-kl').children.length) { $('lb-k0').textContent = K0; $('lb-k0').hidden = false; }
+    $('lb-kh').focus();
+  }
+
+  function itemKomentar(k, p, mod) {
+    var li = el('li', 'kom-i'), isi = el('div'), h = el('p', 'kom-h'), w = el('time', null, relatif(k.dibuat)), aksi = el('div', 'kom-a'), wadah = el('div', 'lapor');
+    var url = avatarUrl(k.penulis), av;
+    if (url) { av = el('img', 'av'); av.src = url; av.alt = ''; } else av = avatar(k.penulis.nama);
+    w.dateTime = new Date(k.dibuat * 1000).toISOString();
+    h.appendChild(el('b', null, k.penulis.nama)); h.appendChild(w);
+    isi.appendChild(h); isi.appendChild(el('p', 'kom-t', k.isi));
+    wadah.hidden = true;
+    if (k.milikku) aksi.appendChild(tombolLink('Hapus', function () {
+      var t = this;
+      formKonfirmasi(wadah, 'Hapus komentarmu ini?', 'Ya, hapus', null, function (_, selesai) {
+        ambil('/api/foto/komentar/hapus', { json: { id: k.id } }).then(function () { toast('Komentar dihapus.'); kurangiKomentar(p, li); }, selesai);
+      }, t);
+    }));
+    else if (masuk()) aksi.appendChild(tombolLink('Laporkan', function () {
+      formLapor(wadah, 'komentar', k.id, function (r) { if (r.disembunyikan) kurangiKomentar(p, li); }, this);
+    }));
+    if (mod && !k.milikku) aksi.appendChild(tombolLink('Sembunyikan (mod)', function () {
+      formKonfirmasi(wadah, 'Sembunyikan komentar ini dari semua orang?', 'Sembunyikan', 'Alasan', function (alasan, selesai) {
+        ambil('/api/mod/komentar', { json: { id: k.id, alasan: alasan } }).then(function () { toast('Komentar disembunyikan.'); kurangiKomentar(p, li); }, selesai);
+      }, this);
+    }));
+    isi.appendChild(aksi); isi.appendChild(wadah);
+    li.appendChild(av); li.appendChild(isi);
+    return li;
+  }
+
+  // Form kecil di tempat (tanpa jendela pop-up). labelIsian: kalau diisi, ada kolom teks wajib (min 3 huruf).
+  function formKonfirmasi(wadah, tanya, teksYa, labelIsian, kirim, pemicu) {
+    var id = 'fk' + (++nomorForm), err = el('p', 'err'), inp = null, ya = el('button', 'btn kecil merah', teksYa), batal = el('button', 'btn kecil o', 'Batal'), r = el('div', 'ract');
+    wadah.textContent = ''; wadah.hidden = false; err.setAttribute('role', 'alert');
+    wadah.appendChild(el('p', null, tanya));
+    if (labelIsian) {
+      var lbl = el('label', null, labelIsian); inp = el('input'); inp.id = id; lbl.htmlFor = id; inp.type = 'text'; inp.maxLength = 150;
+      wadah.appendChild(lbl); wadah.appendChild(inp);
+    }
+    ya.type = batal.type = 'button';
+    function tutup() { wadah.hidden = true; wadah.textContent = ''; if (pemicu && document.contains(pemicu)) pemicu.focus(); }
+    ya.addEventListener('click', function () {
+      var nilai = inp ? inp.value.trim() : '';
+      if (inp && nilai.length < 3) { err.textContent = 'Tulis alasannya dulu.'; inp.focus(); return; }
+      ya.disabled = true; err.textContent = '';
+      kirim(nilai, function (e) { ya.disabled = false; err.textContent = e.message; });
+    });
+    batal.addEventListener('click', tutup);
+    r.appendChild(ya); r.appendChild(batal); wadah.appendChild(r); wadah.appendChild(err);
+    (inp || ya).focus();
+  }
+
+  function formLapor(wadah, jenis, id, sesudah, pemicu) {
+    var uid = 'lp' + (++nomorForm), lbl = el('label', null, 'Kenapa dilaporkan?'), sel = el('select'), err = el('p', 'err');
+    var kirim = el('button', 'btn kecil merah', 'Kirim laporan'), batal = el('button', 'btn kecil o', 'Batal'), r = el('div', 'ract');
+    wadah.textContent = ''; wadah.hidden = false; sel.id = uid; lbl.htmlFor = uid; err.setAttribute('role', 'alert');
+    ALASAN_LAPOR.forEach(function (a) { sel.appendChild(el('option', null, a)); });
+    kirim.type = batal.type = 'button';
+    function tutup() { wadah.hidden = true; wadah.textContent = ''; if (pemicu && document.contains(pemicu)) pemicu.focus(); }
+    kirim.addEventListener('click', function () {
+      kirim.disabled = true; err.textContent = '';
+      ambil('/api/lapor', { json: { jenis: jenis, id: id, alasan: sel.value } }).then(function (res) {
+        tutup();
+        toast(res.disembunyikan ? 'Terima kasih. Komentar ini disembunyikan sampai dicek mod.' : 'Terima kasih, laporanmu sudah dikirim ke mod.');
+        if (sesudah) sesudah(res);
+      }, function (e) { kirim.disabled = false; err.textContent = e.message; });
+    });
+    batal.addEventListener('click', tutup);
+    r.appendChild(kirim); r.appendChild(batal);
+    [lbl, sel, r, err].forEach(function (x) { wadah.appendChild(x); });
+    sel.focus();
+  }
+  $('lb-lapor').addEventListener('click', function () { if (lbFoto) formLapor($('lb-lf'), 'foto', lbFoto.id, null, this); });
+
+  // Tulis komentar
+  var kt = $('lb-kt');
+  kt.addEventListener('input', function () { $('lb-kc').textContent = kt.value.length + ' / 300'; $('lb-ke').textContent = ''; });
+  $('lb-kf').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var p = lbFoto, isi = kt.value.trim(), btn = $('lb-kg');
+    if (!p) return;
+    if (!isi) { $('lb-ke').textContent = 'Tulis komentarnya dulu.'; kt.focus(); return; }
+    btn.disabled = true; $('lb-ke').textContent = '';
+    ambil('/api/foto/komentar', { json: { id: p.id, isi: isi } }).then(function (r) {
+      kt.value = ''; $('lb-kc').textContent = '0 / 300';
+      if (lbFoto === p) { var l = $('lb-kl'); l.appendChild(itemKomentar(r.komentar, p, akun && akun.mod)); $('lb-k0').hidden = true; l.lastChild.scrollIntoView({ block: 'nearest' }); }
+      p.komentar++; segarkan(p);
+    }, function (er) {
+      $('lb-ke').textContent = er.message;
+      if (er.status === 401) { akun.masuk = false; tampilAkun(); tampilSosial(p); }
+    }).then(function () { btn.disabled = false; });
   });
 
   // ---------- Mulai ----------

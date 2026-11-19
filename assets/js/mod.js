@@ -15,8 +15,15 @@
     'Berisi info pribadi (wajah asli, alamat, kontak)',
     'Lainnya'
   ];
-  var AKSI = { setujui: 'menyetujui foto', tolak: 'menolak foto', turunkan: 'menurunkan foto', blokir: 'memblokir akun', 'buka-blokir': 'membuka blokir akun' };
-  var KOSONG = { menunggu: 'Antrean kosong. Semua foto sudah dicek.', tayang: 'Belum ada foto upload yang tayang.', ditolak: 'Belum ada foto yang ditolak.', diblokir: 'Tidak ada akun yang diblokir.', riwayat: 'Belum ada tindakan mod.' };
+  var AKSI = {
+    setujui: 'menyetujui foto', tolak: 'menolak foto', turunkan: 'menurunkan foto', blokir: 'memblokir akun', 'buka-blokir': 'membuka blokir akun',
+    'sembunyikan-komentar': 'menyembunyikan komentar', 'abaikan-laporan': 'mengabaikan laporan', 'lepas-nick': 'melepas nickname'
+  };
+  var KOSONG = {
+    menunggu: 'Antrean kosong. Semua foto sudah dicek.', laporan: 'Tidak ada laporan terbuka.', tayang: 'Belum ada foto upload yang tayang.',
+    ditolak: 'Belum ada foto yang ditolak.', diblokir: 'Tidak ada akun yang diblokir.', nick: 'Belum ada nickname yang dimiliki.', riwayat: 'Belum ada tindakan mod.'
+  };
+  var TAB = ['menunggu', 'laporan', 'tayang', 'ditolak', 'diblokir', 'nick', 'riwayat'];
   var PESAN_LOGIN = { batal: 'Login dibatalkan.', gagal: 'Login gagal. Coba lagi sebentar lagi.', 'bukan-member': 'Akun Discord-mu belum gabung server ChaaTown.', diblokir: 'Akun ini diblokir.', 'belum-siap': 'Login Discord belum disiapkan oleh admin.' };
 
   function $(id) { return document.getElementById(id); }
@@ -60,20 +67,22 @@
       if (n !== null) { e.preventDefault(); buka(tabs[n].dataset.k, true); }
     });
   });
-  function angka(j) { ['menunggu', 'tayang', 'ditolak', 'diblokir'].forEach(function (k) { $('n-' + k).textContent = j && j[k] ? j[k] : ''; }); }
+  function angka(j) { ['menunggu', 'laporan', 'tayang', 'ditolak', 'diblokir'].forEach(function (k) { $('n-' + k).textContent = j && j[k] ? j[k] : ''; }); }
   function segarkanAngka() { ambil('/api/mod/pengguna').then(function (d) { angka(d.jumlah); }, function () {}); }
 
   function muat() {
     var k = aktif, ke = ++urutan;
     panel.textContent = ''; panel.appendChild(el('p', 'lead', 'Memuat...'));
-    var u = k === 'diblokir' ? '/api/mod/pengguna' : k === 'riwayat' ? '/api/mod/riwayat' : '/api/mod/foto?status=' + k;
+    var u = { diblokir: '/api/mod/pengguna', riwayat: '/api/mod/riwayat', laporan: '/api/mod/laporan', nick: '/api/mod/nick' }[k] || '/api/mod/foto?status=' + k;
     ambil(u).then(function (d) {
       if (ke !== urutan) return; // sudah pindah tab
       angka(d.jumlah); panel.textContent = '';
-      var isi = k === 'diblokir' ? d.pengguna : k === 'riwayat' ? d.riwayat : d.foto;
+      var isi = { diblokir: d.pengguna, riwayat: d.riwayat, laporan: d.laporan, nick: d.nick }[k] || d.foto;
       if (!isi.length) { panel.appendChild(el('p', 'kosong-p', KOSONG[k])); return; }
       if (k === 'diblokir') panel.appendChild(daftarBlokir(isi));
       else if (k === 'riwayat') panel.appendChild(daftarRiwayat(isi));
+      else if (k === 'laporan') isi.forEach(function (l) { panel.appendChild(kartuLaporan(l)); });
+      else if (k === 'nick') panel.appendChild(daftarNick(isi));
       else isi.forEach(function (f) { panel.appendChild(kartu(f)); });
     }, function (e) {
       if (ke !== urutan) return;
@@ -195,6 +204,82 @@
     return ul;
   }
 
+  // ---------- Laporan dari pemain (Fase G4) ----------
+  function kartuLaporan(l) {
+    var a = el('article', 'mk'), b = el('div'), err = el('p', 'err'), id = 'l' + (++nomor), g;
+    err.setAttribute('role', 'alert');
+    var src = l.foto ? l.foto.src : l.komentar.foto.src;
+    if (src) {
+      g = el('a', 'mk-g'); g.href = src; g.target = '_blank'; g.rel = 'noopener';
+      var im = el('img'); im.src = src; im.loading = 'lazy'; im.alt = l.foto ? 'Buka foto yang dilaporkan' : 'Buka foto tempat komentar ini'; g.appendChild(im);
+    } else g = el('div', 'mk-g kosong', 'File foto sudah dihapus');
+
+    var judul = el('h2');
+    judul.appendChild(el('span', 'rw-a ' + (l.foto ? 'turunkan' : 'tolak'), l.foto ? 'foto' : 'komentar'));
+    judul.appendChild(document.createTextNode(' Dilaporkan ' + l.jumlah + ' akun'));
+    b.appendChild(judul);
+    if (l.komentar) {
+      var q = el('blockquote', 'kutip', l.komentar.isi); b.appendChild(q);
+    }
+    var dl = el('dl', 'mk-m');
+    function baris(dt, dd) { dl.appendChild(el('dt', null, dt)); dl.appendChild(el('dd', null, dd)); }
+    if (l.foto) { baris('Caption', l.foto.caption || 'Tanpa caption'); baris('Nick MC', l.foto.nick); }
+    else { baris('Di foto', l.komentar.foto.caption || 'Tanpa caption'); if (l.komentar.status !== 'tampil') baris('Status', 'Disembunyikan' + (l.komentar.alasan ? ' (' + l.komentar.alasan + ')' : '')); }
+    baris(l.foto ? 'Pemilik' : 'Penulis', l.pemilik.nama + ' (ID ' + l.pemilik.id + ')');
+    baris('Alasan laporan', l.alasan.join(' · '));
+    baris('Laporan pertama', relatif(l.pertama));
+    b.appendChild(dl);
+
+    var aksi = el('div', 'ract'), f = el('div', 'mk-f'), lbl = el('label', null, 'Alasan'), inp = el('input');
+    f.hidden = true; inp.id = id + '-a'; lbl.htmlFor = inp.id; inp.type = 'text'; inp.maxLength = 150;
+    inp.value = l.alasan[0] || '';
+    inp.addEventListener('input', function () { err.textContent = ''; });
+    var teksTindak = l.foto ? 'Turunkan foto' : 'Sembunyikan komentar';
+    function kirim(aksiNya, tombolNya) {
+      var alasan = inp.value.trim();
+      if (aksiNya === 'tindak' && alasan.length < 3) { err.textContent = 'Tulis alasannya dulu.'; inp.focus(); return; }
+      tombolNya.disabled = true; err.textContent = '';
+      ambil('/api/mod/laporan', { jenis: l.jenis, id: l.id, aksi: aksiNya, alasan: alasan }).then(function () {
+        selesai(a, aksiNya === 'abaikan' ? 'Laporan diabaikan.' + (l.komentar && l.komentar.status !== 'tampil' ? ' Komentarnya muncul lagi.' : '') : (l.foto ? 'Foto diturunkan.' : 'Komentar disembunyikan.'));
+      }, function (e) { tombolNya.disabled = false; err.textContent = e.message; });
+    }
+    aksi.appendChild(tombol(teksTindak + '...', 'merah', function () { f.hidden = !f.hidden; if (!f.hidden) inp.focus(); }));
+    aksi.appendChild(tombol('Abaikan laporan', 'o', function () { kirim('abaikan', this); }));
+    var konfirmasi = el('div', 'ract');
+    konfirmasi.appendChild(tombol(teksTindak, 'merah', function () { kirim('tindak', this); }));
+    konfirmasi.appendChild(tombol('Batal', 'o', function () { f.hidden = true; aksi.querySelector('.btn').focus(); }));
+    [lbl, inp, konfirmasi].forEach(function (x) { f.appendChild(x); });
+    b.appendChild(aksi); b.appendChild(f); b.appendChild(err);
+    a.appendChild(g); a.appendChild(b);
+    return a;
+  }
+
+  // ---------- Nickname (Fase G4) ----------
+  function daftarNick(list) {
+    var ul = el('ul', 'ul');
+    list.forEach(function (n) {
+      var li = el('li'), d = el('div');
+      d.appendChild(el('b', null, n.tampil));
+      d.appendChild(el('small', null, n.pemilik ? 'Milik ' + n.pemilik.nama + ' (ID ' + n.pemilik.id + ')' + (n.dibuat ? ' · sejak ' + relatif(n.dibuat) : '') : 'Dipesan untuk pemilik foto arsip'));
+      li.appendChild(d);
+      var wadah = el('div', 'ract');
+      wadah.appendChild(tombol('Lepas', 'o kecil', function () {
+        var t = this; wadah.textContent = '';
+        wadah.appendChild(el('span', 'tanya', 'Lepas nickname ini? Akun berikutnya yang memakainya akan jadi pemiliknya.'));
+        wadah.appendChild(tombol('Ya, lepas', 'merah kecil', function () {
+          var y = this; y.disabled = true;
+          ambil('/api/mod/nick', { nick: n.nick, aksi: 'lepas' }).then(function () { selesai(li, 'Nickname ' + n.tampil + ' sudah dilepas.'); },
+            function (e) { y.disabled = false; info(e.message, true); });
+        }));
+        wadah.appendChild(tombol('Batal', 'o kecil', function () { muat(); }));
+        wadah.querySelector('.merah').focus();
+      }));
+      li.appendChild(wadah);
+      ul.appendChild(li);
+    });
+    return ul;
+  }
+
   // ---------- Riwayat ----------
   function daftarRiwayat(list) {
     var ul = el('ul', 'ul');
@@ -230,5 +315,5 @@
     // Alamat diganti tanpa muat ulang (misalnya link ke #ditolak): ikut pindah tab
     window.addEventListener('hashchange', function () { var k = dariAlamat(); if (k && k !== aktif) buka(k, false); });
   }, function () { tampil('st-mati'); });
-  function dariAlamat() { var h = location.hash.slice(1); return ['menunggu', 'tayang', 'ditolak', 'diblokir', 'riwayat'].indexOf(h) > -1 ? h : null; }
+  function dariAlamat() { var h = location.hash.slice(1); return TAB.indexOf(h) > -1 ? h : null; }
 })();

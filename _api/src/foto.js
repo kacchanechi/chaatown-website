@@ -4,7 +4,9 @@
 import { json, galat, sekarang, asalSah, rapikanTeks } from './alat.js';
 import { periksaGambar, Tolak } from './berkas.js';
 import { sesiDari, devAktif } from './masuk.js';
-import { kabariMod, jumlahMenunggu } from './mod.js';
+import { kabariMod, jumlahMenunggu, jumlahLaporan } from './mod.js';
+
+const MAKS_NICK_PER_AKUN = 3;
 
 const NICK = /^[A-Za-z0-9_.* ]{3,24}$/; // nickname Minecraft (Java & Bedrock), 3-24 karakter
 const JENIS = { webp: 'image/webp', jpg: 'image/jpeg' };
@@ -26,20 +28,27 @@ export async function saya(req, env, ctx, url) {
   const s = await sesiDari(req, env);
   if (!s) return json({ masuk: false, ...umum });
   const hasil = { masuk: true, ...umum, id: s.id, nama: s.nama, avatar: s.avatar, mod: s.mod, diblokir: s.diblokir, kuota: await kuota(env, s.id) };
-  if (s.mod) hasil.antreanMod = await jumlahMenunggu(env);
+  if (s.mod) { hasil.antreanMod = await jumlahMenunggu(env); hasil.laporanMod = await jumlahLaporan(env); }
+  const { results: nk } = await env.DB.prepare('SELECT tampil FROM nick WHERE pengguna_id = ?1 ORDER BY dibuat').bind(s.id).all();
+  hasil.nick = nk.map(r => r.tampil); // nickname milik akun ini
   return json(hasil);
 }
 
 /** GET /api/foto -> foto yang sudah disetujui mod (terbaru dulu) */
 export async function daftar(req, env, ctx, url) {
   const sebelum = angka(url.searchParams.get('sebelum'), 2e9);
+  const s = await sesiDari(req, env);
   const { results } = await env.DB.prepare(
-    "SELECT f.id, f.jenis, f.nick, f.caption, f.lebar, f.tinggi, f.dibuat, p.nama, p.avatar, p.id AS pid " +
+    "SELECT f.id, f.jenis, f.nick, f.caption, f.lebar, f.tinggi, f.dibuat, p.nama, p.avatar, p.id AS pid, " +
+    "(SELECT COUNT(*) FROM suka x WHERE x.foto_id = f.id) AS suka, " +
+    "(SELECT COUNT(*) FROM komentar k WHERE k.foto_id = f.id AND k.status = 'tampil') AS komentar, " +
+    "EXISTS (SELECT 1 FROM suka x WHERE x.foto_id = f.id AND x.pengguna_id = ?2) AS disukai " +
     "FROM foto f JOIN pengguna p ON p.id = f.pengguna_id WHERE f.status = 'tayang' AND f.dibuat < ?1 ORDER BY f.dibuat DESC LIMIT 60"
-  ).bind(sebelum).all();
+  ).bind(sebelum, s ? s.id : '').all();
   return json({
     foto: results.map(r => ({
       id: r.id, src: '/img/' + r.id + '.' + r.jenis, nick: r.nick, caption: r.caption, lebar: r.lebar, tinggi: r.tinggi, dibuat: r.dibuat,
+      suka: r.suka, komentar: r.komentar, disukai: !!r.disukai,
       pemilik: { id: r.pid, nama: r.nama, avatar: r.avatar }
     }))
   });
@@ -86,8 +95,19 @@ export async function upload(req, env, ctx) {
   const file = form.get('foto');
   if (!(file instanceof File) || !file.size) return galat(400, 'Pilih foto dulu.');
   if (file.size > maks) return galat(413, 'Foto terlalu besar (maksimal ' + Math.round(maks / 1048576) + ' MB).');
-  const nick = rapikanTeks(form.get('nick'), 40);
+  let nick = rapikanTeks(form.get('nick'), 40);
   if (!NICK.test(nick)) return galat(400, 'Isi nickname Minecraft-mu (3 sampai 24 karakter: huruf, angka, _).');
+  // Kepemilikan nickname: nick pertama dipakai akun siapa, jadi milik akun itu (cegah menyamar jadi pemain lain)
+  const punya = await env.DB.prepare('SELECT tampil, pengguna_id FROM nick WHERE nick = ?1').bind(nick.toLowerCase()).first();
+  if (punya) {
+    if (punya.pengguna_id !== s.id) return galat(409, punya.pengguna_id
+      ? 'Nickname ini sudah dipakai akun Discord lain. Kalau ini benar nickname-mu, hubungi mod.'
+      : 'Nickname ini dipesan untuk pemilik foto lama di galeri. Kalau ini nickname-mu, hubungi mod supaya bisa dipakai.');
+    nick = punya.tampil; // samakan penulisan, misalnya "gikx" -> "Gikx"
+  } else {
+    const n = (await env.DB.prepare('SELECT COUNT(*) AS n FROM nick WHERE pengguna_id = ?1').bind(s.id).first()).n;
+    if (n >= MAKS_NICK_PER_AKUN) return galat(400, 'Satu akun Discord maksimal punya ' + MAKS_NICK_PER_AKUN + ' nickname. Pakai salah satu nickname-mu yang sudah ada.');
+  }
   const caption = rapikanTeks(form.get('caption'), 150);
 
   if (!(await cekTurnstile(form.get('cf-turnstile-response'), req, env))) return galat(400, 'Verifikasi anti-bot gagal. Coba lagi.');
@@ -100,11 +120,13 @@ export async function upload(req, env, ctx) {
   try { g = periksaGambar(new Uint8Array(await file.arrayBuffer())); }
   catch (e) { if (e instanceof Tolak) return galat(400, e.message); throw e; }
 
-  const id = crypto.randomUUID();
+  const id = crypto.randomUUID(), t = sekarang();
   await env.FOTO.put('foto/' + id + '.' + g.jenis, g.isi, { httpMetadata: { contentType: JENIS[g.jenis] } });
-  await env.DB.prepare(
+  const simpan = [env.DB.prepare(
     "INSERT INTO foto (id, pengguna_id, nick, caption, jenis, status, lebar, tinggi, ukuran, dibuat) VALUES (?1, ?2, ?3, ?4, ?5, 'menunggu', ?6, ?7, ?8, ?9)"
-  ).bind(id, s.id, nick, caption, g.jenis, g.lebar, g.tinggi, g.isi.length, sekarang()).run();
+  ).bind(id, s.id, nick, caption, g.jenis, g.lebar, g.tinggi, g.isi.length, t)];
+  if (!punya) simpan.push(env.DB.prepare('INSERT OR IGNORE INTO nick (nick, tampil, pengguna_id, dibuat) VALUES (?1, ?2, ?3, ?4)').bind(nick.toLowerCase(), nick, s.id, t));
+  await env.DB.batch(simpan);
   ctx.waitUntil(kabariMod(env).catch(e => console.error('notifikasi mod gagal:', e && e.message))); // tidak menunda balasan ke pengupload
   return json({ id, status: 'menunggu' }, 201);
 }

@@ -43,7 +43,7 @@
 
     <section class="prof" id="prof" aria-labelledby="pn" hidden>
       <a class="back" id="back" href="./">&larr; Semua foto</a>
-      <div class="ph"><span class="pa" id="pa" aria-hidden="true"></span><div><h2 id="pn" tabindex="-1"></h2><p id="pc"></p></div></div>
+      <div class="ph"><span class="pa" id="pa" aria-hidden="true"></span><img class="pa-img" id="pa-img" alt="" hidden><div><h2 id="pn" tabindex="-1"></h2><p id="pc"></p><p class="pd" id="pd" hidden></p></div></div>
     </section>
 
     <div class="grid" id="grid"></div>
@@ -76,7 +76,8 @@
             <img id="fu-pv" alt="Pratinjau foto yang dipilih" hidden>
           </label>
           <label for="fu-nick">Nickname Minecraft</label>
-          <input id="fu-nick" type="text" maxlength="24" autocomplete="off" spellcheck="false" placeholder="Contoh: Steve123">
+          <input id="fu-nick" type="text" maxlength="24" autocomplete="off" spellcheck="false" placeholder="Contoh: Steve123" list="fu-nicks">
+          <datalist id="fu-nicks"></datalist>
           <label for="fu-cap">Caption <small>(opsional)</small></label>
           <textarea id="fu-cap" maxlength="150" rows="2" placeholder="Ceritain momen di foto ini"></textarea>
           <p class="hit" id="fu-hit">0 / 150</p>
@@ -94,11 +95,29 @@
   </main>
   <footer>Dibuat dengan 💙 oleh Achaa</footer>
 </div>
+<div id="toast" role="status" aria-live="polite"></div>
 
 <div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Foto diperbesar" hidden>
   <button class="lbx" id="lbx" type="button" aria-label="Tutup">&times;</button>
   <button class="lbn lbp" id="lbp" type="button" aria-label="Foto sebelumnya">&#8249;</button>
-  <figure><div class="lbm" id="lbm"></div><figcaption id="lbc"></figcaption><p class="lbi" id="lbi" aria-live="polite"></p></figure>
+  <div class="lb-isi">
+    <figure><div class="lbm" id="lbm"></div><figcaption id="lbc"></figcaption><p class="lbi" id="lbi" aria-live="polite"></p></figure>
+    <!-- Suka & komentar (Fase G4): hanya untuk foto upload, bukan 12 foto arsip -->
+    <section class="lbs" id="lbs" aria-labelledby="lb-kh" hidden>
+      <div class="lbs-a"><button class="suka" id="lb-suka" type="button"></button><button class="lnk" id="lb-lapor" type="button">Laporkan foto</button></div>
+      <div class="lapor" id="lb-lf" hidden></div>
+      <h2 class="lbs-h" id="lb-kh" tabindex="-1">Komentar</h2>
+      <ul class="kom" id="lb-kl"></ul>
+      <p class="kom-0" id="lb-k0" hidden></p>
+      <form class="kom-f" id="lb-kf" novalidate hidden>
+        <label class="sr" for="lb-kt">Tulis komentar</label>
+        <textarea id="lb-kt" rows="2" maxlength="300" placeholder="Tulis komentar..."></textarea>
+        <div class="kom-fb"><span class="hit" id="lb-kc">0 / 300</span><button class="btn kecil" id="lb-kg" type="submit">Kirim</button></div>
+        <p class="err" id="lb-ke" role="alert"></p>
+      </form>
+      <p class="kom-m" id="lb-km" hidden><a href="/api/auth/masuk?balik=/galeri/">Masuk dengan Discord</a> untuk menyukai dan berkomentar.</p>
+    </section>
+  </div>
   <button class="lbn lbnx" id="lbnx" type="button" aria-label="Foto berikutnya">&#8250;</button>
 </div>
 

@@ -15,12 +15,22 @@
      GET  /api/mod/pengguna    akun yang diblokir
      POST /api/mod/pengguna    { id, blokir: true|false, alasan }
      GET  /api/mod/riwayat     100 tindakan mod terakhir
+   Sosial (Fase G4):
+     POST /api/foto/suka            { id, suka }
+     GET  /api/foto/komentar?id=    komentar sebuah foto
+     POST /api/foto/komentar        { id, isi }
+     POST /api/foto/komentar/hapus  { id }  (komentar sendiri)
+     POST /api/lapor                { jenis: foto|komentar, id, alasan }
+     GET  /api/mod/laporan  ·  POST /api/mod/laporan { jenis, id, aksi: tindak|abaikan, alasan }
+     POST /api/mod/komentar { id, alasan }   (mod menyembunyikan komentar)
+     GET  /api/mod/nick     ·  POST /api/mod/nick { nick, aksi: lepas }
    Selain itu: file website biasa (hanya saat dijalankan di komputer).
    ===================================================================== */
 import { galat } from './alat.js';
 import { masuk, callback, keluar, devMasuk } from './masuk.js';
 import { saya, daftar, upload, punyaSaya, gambar } from './foto.js';
-import { daftarMod, aksiFoto, daftarDiblokir, aksiPengguna, riwayat } from './mod.js';
+import { daftarMod, aksiFoto, daftarDiblokir, aksiPengguna, riwayat, daftarLaporan, aksiLaporan, sembunyikanKomentar, daftarNick, aksiNick } from './mod.js';
+import { suka, daftarKomentar, tulisKomentar, hapusKomentar, lapor } from './sosial.js';
 
 const RUTE = {
   'GET /api/saya': saya,
@@ -35,7 +45,18 @@ const RUTE = {
   'POST /api/mod/foto': aksiFoto,
   'GET /api/mod/pengguna': daftarDiblokir,
   'POST /api/mod/pengguna': aksiPengguna,
-  'GET /api/mod/riwayat': riwayat
+  'GET /api/mod/riwayat': riwayat,
+  // Fase G4: sosial
+  'POST /api/foto/suka': suka,
+  'GET /api/foto/komentar': daftarKomentar,
+  'POST /api/foto/komentar': tulisKomentar,
+  'POST /api/foto/komentar/hapus': hapusKomentar,
+  'POST /api/lapor': lapor,
+  'GET /api/mod/laporan': daftarLaporan,
+  'POST /api/mod/laporan': aksiLaporan,
+  'POST /api/mod/komentar': sembunyikanKomentar,
+  'GET /api/mod/nick': daftarNick,
+  'POST /api/mod/nick': aksiNick
 };
 
 export default {
