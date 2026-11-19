@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Pengaman (CSP): browser hanya menjalankan script dari situs ini & Turnstile, dan hanya memuat gambar/font dari sumber di bawah -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; connect-src 'self'; img-src 'self' blob: https://cdn.discordapp.com; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; object-src 'none'; base-uri 'none'; form-action 'self'">
 <title>Galeri - ChaaTownSMP</title>
 <meta name="description" content="Galeri screenshot dan momen seru dari para pemain ChaaTownSMP, server Minecraft survival Java &amp; Bedrock.">
 <link rel="canonical" href="https://chaatown.my.id/galeri/">
@@ -85,6 +87,7 @@
           <p class="err" id="fu-err" role="alert"></p>
           <button class="btn" id="fu-go" type="submit">Kirim ke antrean</button>
           <p class="kuota" id="fu-kuota"></p>
+          <p class="privasi">Nama dan avatar Discord-mu akan tampil bersama foto dan komentarmu. Lokasi dan info kamera di dalam file foto otomatis dibuang.</p>
         </form>
         <div id="mine" hidden>
           <h3>Fotoku</h3>

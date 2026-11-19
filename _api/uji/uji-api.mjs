@@ -143,7 +143,7 @@ r = await kirim(a.cookie, { file: jExif, nama: 'foto.jpg' });
 cek('Upload JPG diterima', r.status === 201, r.status);
 for (let i = 0; i < 3; i++) await kirim(a.cookie);
 r = await kirim(a.cookie);
-cek('Upload ke-6 dalam 24 jam ditolak (429)', r.status === 429 && /Batas upload/.test((await j(r)).galat), r.status);
+cek('Upload ke-6 ditolak (429: batas harian / batas 10 menit)', r.status === 429 && /Batas upload|Terlalu banyak upload/.test((await j(r)).galat), r.status);
 
 /* ---------- 3. Moderasi (Fase G3) ---------- */
 console.log('== Moderasi');

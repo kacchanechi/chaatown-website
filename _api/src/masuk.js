@@ -9,7 +9,7 @@
    - Sesi: kunci acak di cookie HttpOnly. Database hanya menyimpan sidik
      (hash) kunci itu, jadi bocornya database tidak membocorkan sesi.
    ===================================================================== */
-import { json, galat, sekarang, acak, sha256, bacaCookie, buatCookie, asalSah } from './alat.js';
+import { json, galat, sekarang, acak, sha256, bacaCookie, buatCookie, asalSah, rapikanTeks } from './alat.js';
 
 const SESI = '__Host-sesi', STATE = '__Host-oauth';
 const UMUR_SESI = 7 * 24 * 3600;  // 7 hari
@@ -69,7 +69,8 @@ export async function callback(req, env, ctx, url) {
 
     const modRoles = String(env.MOD_ROLE_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
     const mod = (member.roles || []).some(r => modRoles.includes(r));
-    const nama = String(member.nick || user.global_name || user.username || 'Pemain').slice(0, 40);
+    // Nama dirapikan: karakter tak terlihat / pembalik teks dibuang (cegah nama "menipu" di komentar & halaman mod)
+    const nama = rapikanTeks(member.nick || user.global_name || user.username, 40) || 'Pemain';
     return await buatSesi(env, ctx, { id: String(user.id), nama, avatar: user.avatar || null, mod }, balik, [hapusState]);
   } finally {
     // Token Discord tidak dibutuhkan lagi: cabut supaya tidak bisa dipakai siapa pun
@@ -114,13 +115,20 @@ export async function keluar(req, env) {
   return json({ ok: true }, 200, { 'Set-Cookie': buatCookie(SESI, '', { umur: 0 }) });
 }
 
-/** Login uji: HANYA kalau DEV_LOGIN=1 (diisi di _api/.dev.vars) dan dibuka dari komputer sendiri. */
+/**
+ * Login uji: HANYA kalau ketiganya benar: DEV_LOGIN=1 (diisi di _api/.dev.vars), dibuka dari
+ * komputer sendiri, DAN alamat situs (SITUS) juga localhost. Jadi walaupun DEV_LOGIN tidak sengaja
+ * terbawa ke server asli, login uji tetap mati di chaatown.my.id.
+ */
+const LOKAL = h => h === 'localhost' || h === '127.0.0.1';
 export function devAktif(env, url) {
-  return env.DEV_LOGIN === '1' && (url.hostname === 'localhost' || url.hostname === '127.0.0.1');
+  let situs = '';
+  try { situs = new URL(env.SITUS).hostname; } catch { return false; }
+  return env.DEV_LOGIN === '1' && LOKAL(url.hostname) && LOKAL(situs);
 }
 export async function devMasuk(req, env, ctx, url) {
   if (!devAktif(env, url)) return galat(404, 'Alamat API tidak dikenal.');
   const id = (url.searchParams.get('id') || '100000000000000001').replace(/\D/g, '').slice(0, 20) || '100000000000000001';
-  const nama = (url.searchParams.get('nama') || 'Pemain Uji').slice(0, 40);
+  const nama = rapikanTeks(url.searchParams.get('nama') || 'Pemain Uji', 40) || 'Pemain Uji';
   return buatSesi(env, ctx, { id, nama, avatar: null, mod: url.searchParams.get('mod') === '1' }, balikKe(url));
 }

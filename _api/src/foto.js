@@ -1,7 +1,7 @@
 /* =====================================================================
    foto.js - daftar foto, upload, dan penyajian gambar
    ===================================================================== */
-import { json, galat, sekarang, asalSah, rapikanTeks } from './alat.js';
+import { json, galat, sekarang, asalSah, rapikanTeks, cekBatas } from './alat.js';
 import { periksaGambar, Tolak } from './berkas.js';
 import { sesiDari, devAktif } from './masuk.js';
 import { kabariMod, jumlahMenunggu, jumlahLaporan } from './mod.js';
@@ -65,14 +65,18 @@ export async function punyaSaya(req, env) {
   return json({ foto: results.map(r => ({ ...r, src: r.status === 'ditolak' ? null : '/img/' + r.id + '.' + r.jenis })) });
 }
 
+const TURNSTILE_UJI = '1x0000000000000000000000000000000AA'; // kunci uji resmi Cloudflare (selalu lolos)
 async function cekTurnstile(token, req, env) {
-  if (!env.TURNSTILE_SECRET || !token || token.length > 2048) return false; // tanpa kunci rahasia: selalu tolak
+  if (!env.TURNSTILE_SECRET || typeof token !== 'string' || !token || token.length > 2048) return false; // tanpa kunci rahasia: selalu tolak
   try {
     const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
       method: 'POST',
       body: new URLSearchParams({ secret: env.TURNSTILE_SECRET, response: token, remoteip: req.headers.get('CF-Connecting-IP') || '' })
     });
-    return (await r.json()).success === true;
+    const h = await r.json();
+    if (h.success !== true) return false;
+    // Token harus dibuat di situs kita sendiri (kecuali saat memakai kunci uji, yang selalu melaporkan situs contoh)
+    return env.TURNSTILE_SECRET === TURNSTILE_UJI || h.hostname === new URL(env.SITUS).hostname;
   } catch { return false; }
 }
 
@@ -115,6 +119,8 @@ export async function upload(req, env, ctx) {
   const k = await kuota(env, s.id);
   if (k.hariIni >= k.batasHarian) return galat(429, 'Batas upload hari ini sudah habis (' + k.batasHarian + ' foto per 24 jam).');
   if (k.antrean >= k.batasAntrean) return galat(429, 'Masih ada ' + k.antrean + ' fotomu yang menunggu dicek mod. Tunggu dulu ya.');
+  // Penghitung atomik: walau banyak kiriman datang BERSAMAAN, maksimal 5 lolos per 10 menit
+  if (!(await cekBatas(env, 'upload:' + s.id, 5, 600))) return galat(429, 'Terlalu banyak upload dalam waktu singkat. Tunggu sekitar 10 menit, ya.');
 
   let g;
   try { g = periksaGambar(new Uint8Array(await file.arrayBuffer())); }

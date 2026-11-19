@@ -158,3 +158,4 @@ footer{padding:22px 0}
 .lbp{left:10px}.lbnx{right:10px}
 .lbx:hover,.lbn:hover{background:linear-gradient(180deg,var(--pink-a),var(--pink-b) 50%,var(--pink-c));color:#26305a}
 @media(max-width:560px){.lbn{top:auto;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:none}}
+.privasi{margin:10px 0 0!important;font-size:13px}

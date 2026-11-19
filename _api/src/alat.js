@@ -47,6 +47,9 @@ export function asalSah(req, env) {
 /** Baca kiriman JSON kecil (maks 4 KB). Hasil: objek, atau null kalau bukan JSON / rusak / kebesaran. */
 export async function bacaJson(req) {
   if (!(req.headers.get('Content-Type') || '').startsWith('application/json')) return null;
+  // Cek ukuran SEBELUM membaca: kiriman raksasa tidak pernah dimuat ke memori
+  const panjang = Number(req.headers.get('Content-Length') || NaN);
+  if (!(panjang > 0 && panjang <= 4096)) return null;
   const t = await req.text();
   if (t.length > 4096) return null;
   try { const j = JSON.parse(t); return j && typeof j === 'object' && !Array.isArray(j) ? j : null; } catch { return null; }
@@ -69,6 +72,7 @@ export async function cekBatas(env, kunci, maks, detik) {
 /** Rapikan teks bebas: buang karakter kontrol & tak terlihat, satukan spasi, potong panjangnya. */
 export function rapikanTeks(s, maks) {
   return String(s || '').normalize('NFC')
-    .replace(/[\p{Cc}\p{Co}\p{Cn}]|(?!‍)\p{Cf}/gu, ' ') // ‍ = "lem" emoji gabungan, dibiarkan
+    .replace(/(?!‍)\p{Cf}/gu, '')          // karakter tak terlihat (zero-width, pembalik teks) DIHAPUS, jadi "kon​tol" tetap terbaca utuh. ‍ = "lem" emoji gabungan, dibiarkan
+    .replace(/[\p{Cc}\p{Co}\p{Cn}]/gu, ' ')       // karakter kontrol (tab, baris baru, dll.) jadi spasi
     .replace(/\s+/g, ' ').trim().slice(0, maks);
 }
