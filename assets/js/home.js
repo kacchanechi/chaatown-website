@@ -72,9 +72,9 @@
 })();
 
 /* ---------- Form pembelian Rank VIP & Paw Coin ----------
-   Saat ini form belum ada di HTML (tab Top Up berisi "Segera hadir"), jadi bagian ini
-   tidak melakukan apa-apa. Begitu form dengan id fr-* / fp-* ditambahkan lagi,
-   semuanya langsung berfungsi. Data rank & paket ada di config.js. */
+   Form Rank VIP (id fr-*) ada di tab Top Up. Form Paw Coin (id fp-*) belum ada
+   (tab Paw Coin berisi "Segera hadir"), jadi bagian Paw Coin tidak melakukan apa-apa
+   sampai form-nya ditambahkan lagi. Data rank & paket ada di config.js. */
 (function () {
   function el(i) { return document.getElementById(i); }
   function rp(n) { return 'Rp ' + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }

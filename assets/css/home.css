@@ -228,3 +228,22 @@ footer{padding:26px 0}
 @supports not (color:color-mix(in srgb,red 50%,blue)){
   .ab,.race{background:var(--bg2)}
 }
+
+/* ---------- Guide: Fishing (Fish Rework) ---------- */
+.fish .lv{max-width:720px;margin-top:22px}
+.fish .lv .stp{grid-template-columns:40px 1fr}
+.fish .lv .stp b{width:40px;height:40px;font-size:14px}
+.fish .intro code,.fish .nt code,.fish .f code,.fish .note code{font:700 14px "DM Sans",sans-serif;background:var(--bg2);padding:1px 6px;border-radius:8px}
+/* ---------- Top Up: Rank VIP (daftar 18 Nov 2026) ---------- */
+#sp-rank .rk-h .em{font-size:28px;display:block;margin-bottom:4px}
+#sp-rank .rk-h small{display:block;margin-top:4px;font-style:italic}
+#sp-rank .rk-b li{font-size:15px}
+#sp-rank .rk-b code{font-size:13px}
+.rw{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.rw span{font-size:14px;background:color-mix(in srgb,var(--bg2) 70%,transparent);border:1.5px solid var(--rim);border-radius:999px;padding:3px 12px}
+.rw b{font-family:"Silkscreen",monospace}
+.rk-free{margin:0;font-size:14px;color:var(--muted)}
+#sp-rank .rkl{margin:0 0 6px;font:700 13px "DM Sans",sans-serif;color:var(--muted)}
+#sp-rank .rk-b ul.new li{font-weight:700}
+#sp-rank .rk-b ul.inh{margin-bottom:14px}
+#sp-rank .rk-b ul.inh li{font-size:14px;color:var(--muted)}
