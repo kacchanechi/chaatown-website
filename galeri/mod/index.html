@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Moderasi Galeri - ChaaTownSMP</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#f2f6fd" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#232a4d" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="../../favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="../../assets/js/theme.js"></script>
+<link rel="stylesheet" href="../../assets/css/base.css">
+<link rel="stylesheet" href="../../assets/css/galeri.css">
+<link rel="stylesheet" href="../../assets/css/mod.css">
+<link rel="stylesheet" href="../../assets/css/glass.css">
+</head>
+<body>
+<div class="page">
+  <div class="wrap">
+    <nav><b><img class="logo" src="../../assets/img/logo.webp" alt="">Moderasi Galeri</b>
+      <div class="navb"><a class="d" href="../../">Server Minecraft</a><a class="d" href="../../discord/">Server Discord</a><a class="d" href="../">Galeri</a><a class="d" href="../../about/">About Achaa</a><button class="tema" id="tema" type="button" aria-label="Ganti tema terang/gelap"><svg class="ic-gelap" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M5 1h2v1h-2zM4 2h2v1h-2zM3 3h3v1h-3zM2 4h4v1h-4zM1 5h5v1h-5zM1 6h5v1h-5zM1 7h6v1h-6zM1 8h7v1h-7zM1 9h8v1h-8zM1 10h14v1h-14zM2 11h12v1h-12zM3 12h10v1h-10zM4 13h8v1h-8zM5 14h6v1h-6z"/></svg><svg class="ic-terang" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M7 0h2v1h-2zM7 1h2v1h-2zM2 2h1v1h-1zM13 2h1v1h-1zM3 3h1v1h-1zM12 3h1v1h-1zM7 4h2v1h-2zM5 5h6v1h-6zM5 6h6v1h-6zM0 7h2v1h-2zM4 7h8v1h-8zM14 7h2v1h-2zM0 8h2v1h-2zM4 8h8v1h-8zM14 8h2v1h-2zM5 9h6v1h-6zM5 10h6v1h-6zM7 11h2v1h-2zM3 12h1v1h-1zM12 12h1v1h-1zM2 13h1v1h-1zM13 13h1v1h-1zM7 14h2v1h-2zM7 15h2v1h-2z"/></svg></button></div></nav>
+  </div>
+  <main class="wrap">
+    <h1>Moderasi Galeri</h1>
+    <p class="info" id="info" role="status" hidden></p>
+
+    <div id="st-muat"><p class="lead">Memuat...</p></div>
+    <div id="st-mati" hidden><p class="lead">Dapur galeri belum aktif di alamat ini, jadi halaman mod belum bisa dipakai.</p><a class="btn o" href="../">Kembali ke galeri</a></div>
+    <div id="st-masuk" hidden>
+      <p class="lead">Halaman ini khusus mod. Masuk pakai akun Discord yang punya role mod di server ChaaTown.</p>
+      <div class="ract"><a class="btn" href="/api/auth/masuk?balik=/galeri/mod/">Masuk dengan Discord</a><a class="btn o" id="uji" href="/api/auth/dev?mod=1&amp;balik=/galeri/mod/" hidden>Masuk (uji lokal, mod)</a></div>
+    </div>
+    <div id="st-bukan" hidden>
+      <p class="lead">Akun <b id="nama-b"></b> tidak punya role mod, jadi tidak bisa membuka halaman ini. Kalau role mod-mu baru saja ditambahkan, keluar lalu masuk lagi.</p>
+      <div class="ract"><a class="btn o" href="../">Kembali ke galeri</a><button class="btn o" id="keluar-b" type="button">Keluar</button></div>
+    </div>
+
+    <div id="st-mod" hidden>
+      <div class="akun">Masuk sebagai <b id="nama"></b> (mod)<button class="lnk" id="keluar" type="button">Keluar</button></div>
+      <div class="subtabs pills mtabs" role="tablist" aria-label="Bagian moderasi">
+        <button class="stab" role="tab" id="t-menunggu" data-k="menunggu" aria-controls="panel" type="button">Antrean <span class="n" id="n-menunggu"></span></button>
+        <button class="stab" role="tab" id="t-tayang" data-k="tayang" aria-controls="panel" type="button">Tayang <span class="n" id="n-tayang"></span></button>
+        <button class="stab" role="tab" id="t-ditolak" data-k="ditolak" aria-controls="panel" type="button">Ditolak <span class="n" id="n-ditolak"></span></button>
+        <button class="stab" role="tab" id="t-diblokir" data-k="diblokir" aria-controls="panel" type="button">Diblokir <span class="n" id="n-diblokir"></span></button>
+        <button class="stab" role="tab" id="t-riwayat" data-k="riwayat" aria-controls="panel" type="button">Riwayat</button>
+      </div>
+      <div id="panel" role="tabpanel" tabindex="-1" aria-labelledby="t-menunggu"></div>
+    </div>
+  </main>
+  <footer>Dibuat dengan 💙 oleh Achaa</footer>
+</div>
+<script src="../../assets/js/mod.js"></script>
+</body>
+</html>

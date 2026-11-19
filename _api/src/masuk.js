@@ -12,7 +12,8 @@
 import { json, galat, sekarang, acak, sha256, bacaCookie, buatCookie, asalSah } from './alat.js';
 
 const SESI = '__Host-sesi', STATE = '__Host-oauth';
-const UMUR_SESI = 7 * 24 * 3600; // 7 hari
+const UMUR_SESI = 7 * 24 * 3600;  // 7 hari
+const UMUR_SESI_MOD = 12 * 3600;  // 12 jam: kalau role mod dicabut di Discord, aksesnya cepat ikut hilang
 const DISCORD = 'https://discord.com/api/v10';
 
 // Halaman tujuan setelah login: hanya path lokal sederhana (cegah dialihkan ke situs lain)
@@ -86,11 +87,11 @@ async function buatSesi(env, ctx, p, balik, cookies = []) {
     'ON CONFLICT(id) DO UPDATE SET nama = excluded.nama, avatar = excluded.avatar RETURNING diblokir'
   ).bind(p.id, p.nama, p.avatar, t).first();
   if (row && row.diblokir) return alih(balik + '?login=diblokir', cookies);
-  const kunci = acak(32);
+  const kunci = acak(32), umur = p.mod ? UMUR_SESI_MOD : UMUR_SESI;
   await env.DB.prepare('INSERT INTO sesi (id, pengguna_id, mod, kedaluwarsa) VALUES (?1, ?2, ?3, ?4)')
-    .bind(await sha256(kunci), p.id, p.mod ? 1 : 0, t + UMUR_SESI).run();
+    .bind(await sha256(kunci), p.id, p.mod ? 1 : 0, t + umur).run();
   ctx.waitUntil(env.DB.prepare('DELETE FROM sesi WHERE kedaluwarsa < ?1').bind(t).run()); // bersihkan sesi lama
-  return alih(balik + '?login=ok', [...cookies, buatCookie(SESI, kunci, { umur: UMUR_SESI })]);
+  return alih(balik + '?login=ok', [...cookies, buatCookie(SESI, kunci, { umur })]);
 }
 
 /** Baca sesi dari cookie. Hasil: { id, nama, avatar, mod, diblokir, kunciHash } atau null */

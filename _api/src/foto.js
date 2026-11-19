@@ -4,6 +4,7 @@
 import { json, galat, sekarang, asalSah, rapikanTeks } from './alat.js';
 import { periksaGambar, Tolak } from './berkas.js';
 import { sesiDari, devAktif } from './masuk.js';
+import { kabariMod, jumlahMenunggu } from './mod.js';
 
 const NICK = /^[A-Za-z0-9_.* ]{3,24}$/; // nickname Minecraft (Java & Bedrock), 3-24 karakter
 const JENIS = { webp: 'image/webp', jpg: 'image/jpeg' };
@@ -24,7 +25,9 @@ export async function saya(req, env, ctx, url) {
   const umum = { turnstile: env.TURNSTILE_SITEKEY || null, ukuranMaks: angka(env.UKURAN_MAKS, 5242880), discordSiap: !!env.DISCORD_CLIENT_ID, loginUji: devAktif(env, url) };
   const s = await sesiDari(req, env);
   if (!s) return json({ masuk: false, ...umum });
-  return json({ masuk: true, ...umum, id: s.id, nama: s.nama, avatar: s.avatar, mod: s.mod, diblokir: s.diblokir, kuota: await kuota(env, s.id) });
+  const hasil = { masuk: true, ...umum, id: s.id, nama: s.nama, avatar: s.avatar, mod: s.mod, diblokir: s.diblokir, kuota: await kuota(env, s.id) };
+  if (s.mod) hasil.antreanMod = await jumlahMenunggu(env);
+  return json(hasil);
 }
 
 /** GET /api/foto -> foto yang sudah disetujui mod (terbaru dulu) */
@@ -49,7 +52,8 @@ export async function punyaSaya(req, env) {
   const { results } = await env.DB.prepare(
     'SELECT id, jenis, nick, caption, status, alasan, dibuat FROM foto WHERE pengguna_id = ?1 ORDER BY dibuat DESC LIMIT 50'
   ).bind(s.id).all();
-  return json({ foto: results.map(r => ({ ...r, src: '/img/' + r.id + '.' + r.jenis })) });
+  // Foto yang ditolak sudah dihapus filenya, jadi tidak punya gambar lagi
+  return json({ foto: results.map(r => ({ ...r, src: r.status === 'ditolak' ? null : '/img/' + r.id + '.' + r.jenis })) });
 }
 
 async function cekTurnstile(token, req, env) {
@@ -64,7 +68,7 @@ async function cekTurnstile(token, req, env) {
 }
 
 /** POST /api/foto -> upload foto baru (masuk antrean, belum tayang) */
-export async function upload(req, env) {
+export async function upload(req, env, ctx) {
   // Urutan: pemeriksaan murah dulu, pemeriksaan berat (isi gambar) paling akhir
   if (!asalSah(req, env)) return galat(403, 'Permintaan ditolak.');
   const s = await sesiDari(req, env);
@@ -101,6 +105,7 @@ export async function upload(req, env) {
   await env.DB.prepare(
     "INSERT INTO foto (id, pengguna_id, nick, caption, jenis, status, lebar, tinggi, ukuran, dibuat) VALUES (?1, ?2, ?3, ?4, ?5, 'menunggu', ?6, ?7, ?8, ?9)"
   ).bind(id, s.id, nick, caption, g.jenis, g.lebar, g.tinggi, g.isi.length, sekarang()).run();
+  ctx.waitUntil(kabariMod(env).catch(e => console.error('notifikasi mod gagal:', e && e.message))); // tidak menunda balasan ke pengupload
   return json({ id, status: 'menunggu' }, 201);
 }
 

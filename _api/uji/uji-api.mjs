@@ -1,17 +1,21 @@
 /* =====================================================================
-   Uji dapur galeri. Jalankan dari folder _api, saat "npm run dev" sedang jalan
-   di terminal lain:   npm run uji
+   Uji dapur galeri. Jalankan dari folder _api, saat "npm.cmd run dev" sedang
+   jalan di terminal lain:   npm.cmd run uji
    Butuh internet (verifikasi anti-bot memakai kunci uji resmi Cloudflare).
    Aman diulang: setiap putaran memakai akun uji baru.
+   CATATAN: uji ini membuat akun & foto uji di database lokal, dan memakai
+   login uji (DEV_LOGIN=1). Kalau webhook mod diisi di .dev.vars, upload uji
+   bisa memicu notifikasi ke channel mod (paling sering 1x per 10 menit).
+   Server lain: set UJI_URL, misalnya UJI_URL=http://localhost:8788
    ===================================================================== */
 import { readFileSync } from 'node:fs';
-import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { periksaGambar, Tolak } from '../src/berkas.js';
+import { kabariMod, pesanNotif } from '../src/mod.js';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url)), API = path.join(DIR, '..'), ROOT = path.join(API, '..');
-const B = 'http://localhost:8787', ORIGIN = { Origin: B };
+const B = process.env.UJI_URL || 'http://localhost:8787', ORIGIN = { Origin: B };
 let lolos = 0, gagal = 0;
 const cek = (nama, ok, info = '') => { ok ? lolos++ : gagal++; console.log((ok ? '  PASS ' : '  FAIL ') + nama + (ok ? '' : '  -> ' + info)); };
 const baca = p => new Uint8Array(readFileSync(path.join(ROOT, p)));
@@ -131,22 +135,89 @@ for (let i = 0; i < 3; i++) await kirim(a.cookie);
 r = await kirim(a.cookie);
 cek('Upload ke-6 dalam 24 jam ditolak (429)', r.status === 429 && /Batas upload/.test((await j(r)).galat), r.status);
 
-execSync(`npx wrangler d1 execute DB --local --command "UPDATE foto SET status='tayang' WHERE id='${up.id}'"`, { cwd: API, stdio: 'ignore' });
+/* ---------- 3. Moderasi (Fase G3) ---------- */
+console.log('== Moderasi');
+const postJson = (u, cookie, data, origin = B) => fetch(B + u, { method: 'POST', headers: { Cookie: cookie, 'Content-Type': 'application/json', ...(origin ? { Origin: origin } : {}) }, body: JSON.stringify(data) });
+cek('Belum login: daftar antrean ditolak (403)', (await fetch(B + '/api/mod/foto')).status === 403);
+cek('Bukan mod: daftar antrean ditolak (403)', (await fetch(B + '/api/mod/foto', { headers: { Cookie: a.cookie } })).status === 403);
+cek('Bukan mod: tidak bisa menyetujui (403)', (await postJson('/api/mod/foto', a.cookie, { id: up.id, aksi: 'setujui' })).status === 403);
+const rm = await fetch(B + '/api/auth/dev?id=' + idUji + '5&nama=' + encodeURIComponent('Mod Uji') + '&mod=1', { redirect: 'manual' });
+const m = { sc: rm.headers.get('set-cookie') || '' }; m.cookie = (m.sc.match(/__Host-sesi=[^;]+/) || [''])[0];
+cek('Sesi mod cuma 12 jam', /Max-Age=43200/.test(m.sc), m.sc);
+const sm = await j(await fetch(B + '/api/saya', { headers: { Cookie: m.cookie } }));
+cek('Mod: /api/saya memberi tahu jumlah antrean', sm.mod === true && sm.antreanMod >= 5, JSON.stringify(sm));
+const antre = await j(await fetch(B + '/api/mod/foto?status=menunggu', { headers: { Cookie: m.cookie } }));
+const kartuUp = antre.foto.find(f => f.id === up.id);
+cek('Mod: foto muncul di antrean + data pengupload', !!kartuUp && kartuUp.pengguna.nama === 'Pemain Uji' && kartuUp.nick === 'Steve123' && antre.jumlah.menunggu >= 5);
+cek('Mod: antrean urut dari yang paling lama', antre.foto.every((f, i, x) => !i || x[i - 1].dibuat <= f.dibuat));
+cek('Mod: bisa melihat gambar yang belum tayang', (await fetch(img, { headers: { Cookie: m.cookie } })).status === 200);
+cek('Status tidak dikenal ditolak', (await fetch(B + '/api/mod/foto?status=x', { headers: { Cookie: m.cookie } })).status === 400);
+cek('Setujui tanpa Origin ditolak (anti-CSRF)', (await postJson('/api/mod/foto', m.cookie, { id: up.id, aksi: 'setujui' }, null)).status === 403);
+cek('Kiriman bukan JSON ditolak', (await fetch(B + '/api/mod/foto', { method: 'POST', headers: { Cookie: m.cookie, Origin: B, 'Content-Type': 'text/plain' }, body: 'id=' + up.id })).status === 400);
+cek('ID foto ngasal ditolak', (await postJson('/api/mod/foto', m.cookie, { id: "' OR 1=1 --", aksi: 'setujui' })).status === 400);
+r = await postJson('/api/mod/foto', m.cookie, { id: up.id, aksi: 'setujui' });
+cek('Mod menyetujui foto', r.status === 200, r.status);
+cek('Setujui dua kali -> 409 (sudah dicek)', (await postJson('/api/mod/foto', m.cookie, { id: up.id, aksi: 'setujui' })).status === 409);
 const pub = await j(await fetch(B + '/api/foto'));
 const fp = pub.foto.find(f => f.id === up.id);
 cek('Setelah disetujui: muncul di galeri publik', !!fp && fp.nick === 'Steve123' && fp.pemilik.nama === 'Pemain Uji');
 const rp = await fetch(img);
 cek('Setelah disetujui: gambar bisa dibuka publik & boleh di-cache', rp.status === 200 && /public/.test(rp.headers.get('cache-control')));
 
+cek('Tolak tanpa alasan ditolak', (await postJson('/api/mod/foto', m.cookie, { id: up.id, aksi: 'tolak', alasan: ' ' })).status === 400);
+r = await postJson('/api/mod/foto', m.cookie, { id: up.id, aksi: 'tolak', alasan: 'Uji turunkan <b>foto</b>' });
+cek('Mod menurunkan foto yang sudah tayang', r.status === 200, r.status);
+cek('Foto turun dari galeri publik', !(await j(await fetch(B + '/api/foto'))).foto.some(f => f.id === up.id));
+cek('File gambar ikut dihapus (pemilik pun 404)', (await fetch(img, { headers: { Cookie: a.cookie } })).status === 404 && (await fetch(img, { headers: { Cookie: m.cookie } })).status === 404);
+const fx = (await j(await fetch(B + '/api/foto/saya', { headers: { Cookie: a.cookie } }))).foto.find(f => f.id === up.id);
+cek('Fotoku: status ditolak + alasan, tanpa gambar', fx.status === 'ditolak' && fx.alasan === 'Uji turunkan <b>foto</b>' && fx.src === null, JSON.stringify(fx));
+const tol = await j(await fetch(B + '/api/mod/foto?status=ditolak', { headers: { Cookie: m.cookie } }));
+cek('Tab Ditolak: ada nama mod & alasan', tol.foto.some(f => f.id === up.id && f.dicekOleh === 'Mod Uji' && f.src === null));
+
+cek('Mod tidak bisa memblokir diri sendiri', (await postJson('/api/mod/pengguna', m.cookie, { id: idUji + '5', blokir: true, alasan: 'uji' })).status === 400);
+cek('Blokir tanpa alasan ditolak', (await postJson('/api/mod/pengguna', m.cookie, { id: idUji, blokir: true })).status === 400);
+r = await postJson('/api/mod/pengguna', m.cookie, { id: idUji, blokir: true, alasan: 'Uji blokir' });
+const bl = await j(r);
+cek('Mod memblokir akun + foto menunggunya ikut ditolak', r.status === 200 && bl.fotoDitolak >= 1, JSON.stringify(bl));
+const a2 = await login(idUji, 'Pemain Uji');
+cek('Akun diblokir: tidak bisa masuk lagi', a2.r.headers.get('location') === '/galeri/?login=diblokir' && !a2.cookie, a2.r.headers.get('location'));
+cek('Daftar akun diblokir berisi alasannya', (await j(await fetch(B + '/api/mod/pengguna', { headers: { Cookie: m.cookie } }))).pengguna.some(p => p.id === idUji && p.alasan === 'Uji blokir'));
+r = await postJson('/api/mod/pengguna', m.cookie, { id: idUji, blokir: false });
+const a3 = await login(idUji, 'Pemain Uji');
+cek('Mod membuka blokir -> bisa masuk lagi', r.status === 200 && a3.r.headers.get('location') === '/galeri/?login=ok' && !!a3.cookie);
+const rw = await j(await fetch(B + '/api/mod/riwayat', { headers: { Cookie: m.cookie } }));
+const aksiMod = rw.riwayat.filter(x => x.mod_nama === 'Mod Uji').map(x => x.aksi);
+cek('Riwayat mencatat semua tindakan', ['setujui', 'turunkan', 'blokir', 'buka-blokir'].every(x => aksiMod.includes(x)), aksiMod.join(','));
+
+console.log('== Notifikasi mod (webhook)');
+function dbPalsu(menunggu) {
+  const kv = {};
+  return { kv, prepare(sql) { return { a: [], bind(...x) { this.a = x; return this; },
+    async first() { if (sql.includes('FROM pengaturan')) return kv.t ? { nilai: kv.t } : null; return { n: menunggu }; },
+    async run() { if (sql.includes('INSERT INTO pengaturan')) kv.t = this.a[0]; return { meta: { changes: 1 } }; } }; } };
+}
+const WH = 'https://discord.com/api/webhooks/123456789/abcDEF_-xyz';
+let terkirim = [];
+const palsu = async (u, o) => { terkirim.push({ u, body: JSON.parse(o.body) }); return { ok: true }; };
+cek('Tanpa webhook: tidak mengirim', (await kabariMod({ DB: dbPalsu(3), SITUS: B }, palsu)) === false && !terkirim.length);
+cek('NOTIF_MATI=1: tidak mengirim', (await kabariMod({ DB: dbPalsu(3), SITUS: B, DISCORD_WEBHOOK_MOD: WH, NOTIF_MATI: '1' }, palsu)) === false && !terkirim.length);
+cek('Alamat webhook bukan Discord: tidak mengirim', (await kabariMod({ DB: dbPalsu(3), SITUS: B, DISCORD_WEBHOOK_MOD: 'https://situs-jahat.example/api/webhooks/1/x' }, palsu)) === false && !terkirim.length);
+const db = dbPalsu(3), envN = { DB: db, SITUS: 'https://chaatown.my.id', DISCORD_WEBHOOK_MOD: WH };
+cek('Webhook valid: mengirim 1 pesan', (await kabariMod(envN, palsu)) === true && terkirim.length === 1 && terkirim[0].u === WH);
+cek('Isi pesan: jumlah antrean + link mod, tanpa isi dari pengupload', terkirim[0].body.content === pesanNotif(3, 'https://chaatown.my.id') && /\/galeri\/mod\//.test(terkirim[0].body.content));
+cek('Pesan tidak bisa me-mention siapa pun (allowed_mentions kosong)', JSON.stringify(terkirim[0].body.allowed_mentions) === '{"parse":[]}');
+cek('Upload berikutnya < 10 menit: tidak mengirim lagi (anti-spam)', (await kabariMod(envN, palsu)) === false && terkirim.length === 1);
+
 r = await fetch(B + '/api/auth/dev?id=1&balik=' + encodeURIComponent('//situs-jahat.example'), { redirect: 'manual' });
 cek('Alamat balik ke situs lain diabaikan (anti open-redirect)', r.headers.get('location') === '/galeri/?login=ok', r.headers.get('location'));
 r = await fetch(B + '/api/auth/masuk', { redirect: 'manual' });
 cek('Login Discord belum disiapkan -> pesan "belum-siap"', /login=belum-siap|discord\.com\/oauth2\/authorize/.test(r.headers.get('location') || ''), r.headers.get('location'));
 
-cek('Logout tanpa Origin ditolak', (await fetch(B + '/api/auth/keluar', { method: 'POST', headers: { Cookie: a.cookie } })).status === 403);
-r = await fetch(B + '/api/auth/keluar', { method: 'POST', headers: { Cookie: a.cookie, ...ORIGIN } });
+cek('Sesi baru aktif sebelum logout', (await j(await fetch(B + '/api/saya', { headers: { Cookie: a3.cookie } }))).masuk === true);
+cek('Logout tanpa Origin ditolak', (await fetch(B + '/api/auth/keluar', { method: 'POST', headers: { Cookie: a3.cookie } })).status === 403);
+r = await fetch(B + '/api/auth/keluar', { method: 'POST', headers: { Cookie: a3.cookie, ...ORIGIN } });
 cek('Logout berhasil', r.status === 200);
-cek('Sesi lama tidak berlaku lagi', (await j(await fetch(B + '/api/saya', { headers: { Cookie: a.cookie } }))).masuk === false);
+cek('Sesi lama tidak berlaku lagi', (await j(await fetch(B + '/api/saya', { headers: { Cookie: a3.cookie } }))).masuk === false);
 cek('Cookie sesi palsu ditolak', (await j(await fetch(B + '/api/saya', { headers: { Cookie: '__Host-sesi=' + 'A'.repeat(43) } }))).masuk === false);
 
 console.log('\n' + lolos + ' PASS, ' + gagal + ' FAIL');

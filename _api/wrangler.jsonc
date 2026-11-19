@@ -22,7 +22,7 @@
   "vars": {
     "SITUS": "http://localhost:8787",            // alamat situs (dipakai untuk cek asal permintaan & alamat balik login)
     "GUILD_ID": "1338010772860833814",            // server Discord ChaaTown
-    "MOD_ROLE_IDS": "",                           // ID role mod, pisahkan dengan koma (dipakai Fase G3)
+    "MOD_ROLE_IDS": "1352265845291749407",        // ID role mod di server Discord, pisahkan dengan koma kalau lebih dari satu
     "TURNSTILE_SITEKEY": "1x00000000000000000000AA", // kunci uji resmi Cloudflare (selalu lolos), diganti saat G6
     "BATAS_UPLOAD_HARIAN": "5",
     "BATAS_ANTREAN": "10",

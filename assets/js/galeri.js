@@ -239,6 +239,8 @@
     if (pakai) av.src = 'https://cdn.discordapp.com/avatars/' + akun.id + '/' + akun.avatar + '.png?size=64';
     else avatar(akun.nama, $('up-pa'));
     av.hidden = !pakai; $('up-pa').hidden = pakai;
+    var lm = $('up-mod'); lm.hidden = !akun.mod;
+    if (akun.mod) lm.textContent = 'Halaman mod' + (akun.antreanMod ? ' (' + akun.antreanMod + ' menunggu)' : '');
     if (!$('fu-nick').value) { try { $('fu-nick').value = localStorage.getItem('chaatown-nick') || ''; } catch (e) {} }
     tampilKuota(); muatPunyaku(); siapkanTurnstile();
   }
@@ -253,8 +255,9 @@
     ambil('/api/foto/saya').then(function (d) {
       var l = $('mine-l'); l.textContent = '';
       d.foto.forEach(function (f) {
-        var li = el('li'), im = el('img'), t = el('div'), s = el('span');
-        im.src = f.src; im.alt = ''; im.loading = 'lazy';
+        var li = el('li'), im, t = el('div'), s = el('span');
+        if (f.src) { im = el('img'); im.src = f.src; im.alt = ''; im.loading = 'lazy'; }
+        else im = el('span', 'kosong'); // foto ditolak: filenya sudah dihapus
         t.appendChild(el('b', null, f.caption || 'Tanpa caption'));
         s.appendChild(el('span', 'st st-' + f.status, LABEL[f.status] || f.status));
         s.appendChild(document.createTextNode(f.status === 'ditolak' && f.alasan ? 'Alasan: ' + f.alasan : 'sebagai ' + f.nick));

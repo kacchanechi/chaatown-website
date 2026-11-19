@@ -6,6 +6,9 @@
 DISCORD_CLIENT_ID=
 DISCORD_CLIENT_SECRET=
 
+# Webhook channel khusus mod (Edit Channel > Integrations > Webhooks). Boleh dikosongkan.
+DISCORD_WEBHOOK_MOD=
+
 # Kunci uji resmi Cloudflare Turnstile (selalu lolos). Diganti kunci asli saat G6.
 TURNSTILE_SECRET=1x0000000000000000000000000000000AA
 

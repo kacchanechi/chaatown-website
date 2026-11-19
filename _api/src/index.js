@@ -9,11 +9,18 @@
      GET  /api/auth/callback   (dipanggil Discord setelah login)
      POST /api/auth/keluar     logout
      GET  /img/<id>.<jenis>    file gambar
+   Khusus mod (Fase G3):
+     GET  /api/mod/foto?status=menunggu|tayang|ditolak
+     POST /api/mod/foto        { id, aksi: setujui|tolak, alasan }
+     GET  /api/mod/pengguna    akun yang diblokir
+     POST /api/mod/pengguna    { id, blokir: true|false, alasan }
+     GET  /api/mod/riwayat     100 tindakan mod terakhir
    Selain itu: file website biasa (hanya saat dijalankan di komputer).
    ===================================================================== */
 import { galat } from './alat.js';
 import { masuk, callback, keluar, devMasuk } from './masuk.js';
 import { saya, daftar, upload, punyaSaya, gambar } from './foto.js';
+import { daftarMod, aksiFoto, daftarDiblokir, aksiPengguna, riwayat } from './mod.js';
 
 const RUTE = {
   'GET /api/saya': saya,
@@ -23,7 +30,12 @@ const RUTE = {
   'GET /api/auth/masuk': masuk,
   'GET /api/auth/callback': callback,
   'POST /api/auth/keluar': keluar,
-  'GET /api/auth/dev': devMasuk
+  'GET /api/auth/dev': devMasuk,
+  'GET /api/mod/foto': daftarMod,
+  'POST /api/mod/foto': aksiFoto,
+  'GET /api/mod/pengguna': daftarDiblokir,
+  'POST /api/mod/pengguna': aksiPengguna,
+  'GET /api/mod/riwayat': riwayat
 };
 
 export default {
